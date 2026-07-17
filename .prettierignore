@@ -1,0 +1,10 @@
+# Generated / build output
+node_modules
+.nuxt
+.output
+.vercel
+dist
+package-lock.json
+
+# Binary assets
+public

@@ -1,0 +1,173 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run generate",
+  "framework": "nuxtjs",
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/champions/:path*",
+      "destination": "/2xko/champions/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/players/:path*",
+      "destination": "/2xko/players/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/stats",
+      "destination": "/2xko/stats",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "v"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "c"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "p"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "side"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "q"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "sort"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "fuse"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "src"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "patch"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "ch"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "s"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "type"
+        }
+      ],
+      "destination": "/2xko",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/2xko",
+      "destination": "https://2xko-replay-database.vercel.app/2xko"
+    },
+    {
+      "source": "/2xko/:path*",
+      "destination": "https://2xko-replay-database.vercel.app/2xko/:path*"
+    },
+    {
+      "source": "/tekken",
+      "destination": "https://tekken-replay-database.vercel.app/tekken"
+    },
+    {
+      "source": "/tekken/:path*",
+      "destination": "https://tekken-replay-database.vercel.app/tekken/:path*"
+    }
+  ]
+}

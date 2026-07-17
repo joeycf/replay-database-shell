@@ -1,0 +1,10 @@
+.env
+node_modules
+
+# Nuxt / build artifacts
+.nuxt
+.output
+.vercel
+.data
+dist
+.env*
