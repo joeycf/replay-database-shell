@@ -14,9 +14,9 @@ export default defineNuxtConfig({
   // Never track a branch — bump the pin deliberately. `install: true` is
   // REQUIRED for git layers: without it the cloned layer gets no node_modules
   // and its runtime deps (@tailwindcss/vite, ufo, …) don't resolve (STACK §5.5).
-  // v0.5.1 is the platform-wide engine tag for the subpath cutover (both games
-  // pin it too; it carries the static-artifacts subpath fix).
-  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.5.1', { install: true }]],
+  // v0.5.2 is the platform-wide engine tag (both games pin it too); it carries
+  // the shared sticky footer (Buy Me a Coffee centered + copyright).
+  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.5.2', { install: true }]],
 
   compatibilityDate: '2025-07-01',
 
