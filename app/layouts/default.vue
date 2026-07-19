@@ -1,3 +1,30 @@
+<template>
+  <div class="flex min-h-screen flex-col bg-bg font-ui text-text">
+    <a
+      href="#main"
+      class="skip-link"
+      >Skip to content</a
+    >
+
+    <header
+      class="sticky top-0 z-50 border-b border-border-subtle bg-surface-sunken/90 backdrop-blur"
+    >
+      <div class="flex items-center px-4 py-3 md:px-7 md:py-4">
+        <BrandWordmark />
+      </div>
+    </header>
+
+    <main
+      id="main"
+      class="flex-1"
+    >
+      <slot />
+    </main>
+
+    <SiteFooter />
+  </div>
+</template>
+
 <script setup lang="ts">
 /**
  * The shell's minimal chrome — OVERRIDES the engine's default layout at the
@@ -11,23 +38,3 @@
  * wear — just the umbrella wordmark (a link home) and the shared footer.
  */
 </script>
-
-<template>
-  <div class="flex min-h-screen flex-col bg-bg font-ui text-text">
-    <a href="#main" class="skip-link">Skip to content</a>
-
-    <header
-      class="sticky top-0 z-50 border-b border-border-subtle bg-surface-sunken/90 backdrop-blur"
-    >
-      <div class="flex items-center px-4 py-3 md:px-7 md:py-4">
-        <BrandWordmark />
-      </div>
-    </header>
-
-    <main id="main" class="flex-1">
-      <slot />
-    </main>
-
-    <SiteFooter />
-  </div>
-</template>

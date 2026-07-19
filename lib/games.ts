@@ -27,6 +27,9 @@ export interface ShellGame {
   accent: string;
   /** Bundled key art (public path). The game's own og-default lockup. */
   art: string;
+  /** Self-hosted muted hover-loop (public path), trimmed from the game's own
+   *  hero video. Plays over `art` while the selector card is hovered/focused. */
+  video: string;
   /** One-line card blurb (the feature triplet from the game's key art). */
   tagline: string;
   /** Absolute /<slug>/sitemap.xml on the apex — referenced by the index. */
@@ -47,6 +50,7 @@ export const GAMES: ShellGame[] = [
     url: '/2xko',
     accent: '#ff2e88',
     art: '/img/games/2xko.png',
+    video: '/video/games/2xko.mp4',
     tagline: 'Champion usage · team pairings · meta over time',
     sitemapUrl: `${SITE_URL}/2xko/sitemap.xml`,
     summaryUrl: 'https://2xko-replay-database.vercel.app/2xko/data/summary.json',
@@ -59,6 +63,7 @@ export const GAMES: ShellGame[] = [
     url: '/tekken',
     accent: '#e13048',
     art: '/img/games/tekken.png',
+    video: '/video/games/tekken.mp4',
     tagline: 'Character usage · rank ladder · meta over time',
     sitemapUrl: `${SITE_URL}/tekken/sitemap.xml`,
     summaryUrl: 'https://tekken-replay-database.vercel.app/tekken/data/summary.json',
