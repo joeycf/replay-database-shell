@@ -32,6 +32,7 @@ const GAME_DIRS = {
     ROOT,
     '../tekken-replay-database/.vercel/output/static',
   ),
+  'sf6-replay-database.vercel.app': join(ROOT, '../sf6-replay-database/.vercel/output/static'),
 };
 const CONFIG = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
 

@@ -34,7 +34,7 @@
            router — /2xko and /tekken are not routes in this app. -->
       <section
         aria-label="Games"
-        class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24"
+        class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24 lg:grid-cols-3"
       >
         <a
           v-for="g in games"
@@ -62,6 +62,7 @@
               class="art h-full w-full object-cover"
             />
             <video
+              v-if="g.video"
               :src="g.video"
               :poster="g.art"
               muted
@@ -195,7 +196,7 @@ const aggregate = computed(() =>
 useSiteMeta({
   title: 'Replay Database — Competitive Fighting-Game Replays',
   description:
-    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO and Tekken 8 — character usage, matchups, pairings, and meta over time, all in one place.',
+    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8 and Street Fighter 6 — character usage, matchups, pairings, and meta over time, all in one place.',
 });
 
 // ItemList JSON-LD enumerating the games (PLAN §5 A.6) — the apex's structured

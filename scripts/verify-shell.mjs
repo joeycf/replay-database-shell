@@ -136,9 +136,10 @@ try {
       artLoaded: a.querySelector('img')?.naturalWidth > 0,
     })),
   );
-  check(`2 game cards render`, cards.length === 2, JSON.stringify(cards));
+  check(`3 game cards render`, cards.length === 3, JSON.stringify(cards));
   const two = cards.find((c) => c.href === '/2xko');
   const tek = cards.find((c) => c.href === '/tekken');
+  const sf6 = cards.find((c) => c.href === '/sf6');
   check(
     `2XKO card: href=/2xko, accent #ff2e88, art loads`,
     !!two && two.accent === '#ff2e88' && two.name === '2XKO' && two.artLoaded,
@@ -146,6 +147,10 @@ try {
   check(
     `Tekken card: href=/tekken, accent #e13048, art loads`,
     !!tek && tek.accent === '#e13048' && tek.name === 'Tekken 8' && tek.artLoaded,
+  );
+  check(
+    `SF6 card: href=/sf6, accent #ff7d00, art loads`,
+    !!sf6 && sf6.accent === '#ff7d00' && sf6.name === 'Street Fighter 6' && sf6.artLoaded,
   );
 
   const navLeak = await page.evaluate(
@@ -164,11 +169,12 @@ try {
   });
   const itemList = jsonLd.find((n) => n['@type'] === 'ItemList');
   check(
-    `ItemList JSON-LD parses with both games at apex URLs`,
+    `ItemList JSON-LD parses with all three games at apex URLs`,
     !!itemList &&
-      itemList.itemListElement?.length === 2 &&
+      itemList.itemListElement?.length === 3 &&
       itemList.itemListElement[0].url === 'https://replaydatabase.com/2xko' &&
-      itemList.itemListElement[1].url === 'https://replaydatabase.com/tekken',
+      itemList.itemListElement[1].url === 'https://replaydatabase.com/tekken' &&
+      itemList.itemListElement[2].url === 'https://replaydatabase.com/sf6',
     JSON.stringify(itemList),
   );
 

@@ -168,6 +168,14 @@
     {
       "source": "/tekken/:path*",
       "destination": "https://tekken-replay-database.vercel.app/tekken/:path*"
+    },
+    {
+      "source": "/sf6",
+      "destination": "https://sf6-replay-database.vercel.app/sf6"
+    },
+    {
+      "source": "/sf6/:path*",
+      "destination": "https://sf6-replay-database.vercel.app/sf6/:path*"
     }
   ]
 }

@@ -69,11 +69,16 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
 
   const index = await (await fetch(`${HOST}/sitemap.xml`)).text();
   check(`/sitemap.xml is a sitemap INDEX`, index.includes('<sitemapindex'));
-  for (const s of ['/sitemap-pages.xml', '/2xko/sitemap.xml', '/tekken/sitemap.xml']) {
+  for (const s of [
+    '/sitemap-pages.xml',
+    '/2xko/sitemap.xml',
+    '/tekken/sitemap.xml',
+    '/sf6/sitemap.xml',
+  ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
 
-  for (const slug of ['2xko', 'tekken']) {
+  for (const slug of ['2xko', 'tekken', 'sf6']) {
     const res = await fetch(`${HOST}/${slug}/sitemap.xml`);
     const ok = res.status === 200;
     check(`/${slug}/sitemap.xml serves through the shell (${res.status})`, ok);
@@ -147,13 +152,17 @@ try {
     })(),
   }));
   check(`selector wears the umbrella teal (${sel.primary})`, sel.primary === '#17cfc8');
-  check(`cards link /2xko + /tekken`, sel.cards.includes('/2xko') && sel.cards.includes('/tekken'));
-  check(`ItemList JSON-LD parses with 2 games`, sel.itemList === 2);
+  check(
+    `cards link /2xko + /tekken + /sf6`,
+    sel.cards.includes('/2xko') && sel.cards.includes('/tekken') && sel.cards.includes('/sf6'),
+  );
+  check(`ItemList JSON-LD parses with 3 games`, sel.itemList === 3);
 
   // ── each game through the shell host ──
   for (const g of [
     { slug: '2xko', primary: '#ff2e88', charPath: '/2xko/champions/ekko' },
     { slug: 'tekken', primary: '#e13048', charPath: null }, // sampled from its sitemap
+    { slug: 'sf6', primary: '#ff7d00', charPath: '/sf6/characters/ryu' },
   ]) {
     console.log(`\n[/${g.slug}/ through the shell]`);
     await page.goto(`${HOST}/${g.slug}/`, { waitUntil: 'networkidle0' });
@@ -180,7 +189,12 @@ try {
     let charPath = g.charPath;
     if (!charPath) {
       const xml = await (await fetch(`${HOST}/${g.slug}/sitemap.xml`)).text();
-      const m = xml.match(/<loc>https:\/\/replaydatabase\.com(\/tekken\/characters\/[^<]+)<\/loc>/);
+      // Interpolate the slug: this lives inside the per-game loop, so a
+      // hardcoded /tekken/ here silently sampled a TEKKEN url for any other
+      // game entered with charPath: null.
+      const m = xml.match(
+        new RegExp(`<loc>https://replaydatabase\\.com(/${g.slug}/characters/[^<]+)</loc>`),
+      );
       charPath = m?.[1] ?? null;
     }
     if (charPath) {
@@ -208,10 +222,19 @@ try {
 
   // ── the modal deep link (legacy /?v= → /2xko/?v= → modal opens) ──
   console.log('\n[modal deep link]');
+  // Tolerate a host that doesn't serve /2xko at all: pointed at a single game's
+  // own *.vercel.app alias (the pre-cutover smoke check), this 404s and returns
+  // the game's designed 404 HTML. Parsing that as JSON used to throw and kill
+  // the whole run after the useful checks had already passed.
   const vid = await page.evaluate(async () => {
-    const r = await fetch('/2xko/data/replays.json');
-    const replays = await r.json();
-    return replays[0]?.id ?? null;
+    try {
+      const r = await fetch('/2xko/data/replays.json');
+      if (!r.ok) return null;
+      const replays = await r.json();
+      return replays[0]?.id ?? null;
+    } catch {
+      return null;
+    }
   });
   if (vid) {
     await page.goto(`${HOST}/?v=${vid}`, { waitUntil: 'networkidle0' });

@@ -28,8 +28,10 @@ export interface ShellGame {
   /** Bundled key art (public path). The game's own og-default lockup. */
   art: string;
   /** Self-hosted muted hover-loop (public path), trimmed from the game's own
-   *  hero video. Plays over `art` while the selector card is hovered/focused. */
-  video: string;
+   *  hero video. Plays over `art` while the selector card is hovered/focused.
+   *  OPTIONAL: a game without one simply shows its static key art (SF6 ships
+   *  no hero video, so there is nothing to trim a loop from). */
+  video?: string;
   /** One-line card blurb (the feature triplet from the game's key art). */
   tagline: string;
   /** Absolute /<slug>/sitemap.xml on the apex — referenced by the index. */
@@ -67,5 +69,21 @@ export const GAMES: ShellGame[] = [
     tagline: 'Character usage · rank ladder · meta over time',
     sitemapUrl: `${SITE_URL}/tekken/sitemap.xml`,
     summaryUrl: 'https://tekken-replay-database.vercel.app/tekken/data/summary.json',
+  },
+  {
+    // APPEND, don't insert: verify-shell asserts the ItemList JSON-LD
+    // positionally, so reordering GAMES silently breaks the gate.
+    id: 'sf6',
+    name: 'Street Fighter 6',
+    shortName: 'SF6',
+    slug: 'sf6',
+    url: '/sf6',
+    // matches the game's theme.css --color-primary; lowercase because the
+    // gates compare against lowercased computed values
+    accent: '#ff7d00',
+    art: '/img/games/sf6.png',
+    tagline: 'Character usage · matchup data · meta over time',
+    sitemapUrl: `${SITE_URL}/sf6/sitemap.xml`,
+    summaryUrl: 'https://sf6-replay-database.vercel.app/sf6/data/summary.json',
   },
 ];
