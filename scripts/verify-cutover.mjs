@@ -18,6 +18,10 @@ import puppeteer from 'puppeteer-core';
  *   4. /robots.txt points at /sitemap.xml; /sitemap.xml is a sitemap INDEX
  *      listing sitemap-pages.xml + both game sitemaps; each game sitemap's
  *      <loc>s ALL carry the game prefix; no unprefixed game <loc> anywhere.
+ *   5. (Phase 6) Every /<slug>/data/summary.json serves 200 JSON THROUGH the
+ *      apex with the right identity and a real replay count; the selector's
+ *      per-card counts and aggregate line reflect them; and with one summary
+ *      blocked, that card degrades gracefully (positive control).
  *
  * Exit non-zero on any failed gate. Chrome per STACK §5.9
  * (/usr/bin/google-chrome-stable, override via CHROME_PATH).
@@ -28,6 +32,30 @@ const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome-stable';
 // The apex the canonicals/sitemaps must point at — build-time absolute URLs,
 // fixed regardless of which host serves the page (preview or production).
 const APEX = 'https://replaydatabase.com';
+
+/**
+ * The games, as the shell's lib/games.ts declares them. Restated here because
+ * this is a plain-node script that can't import the TS module — but `id` and
+ * `name` are exactly what each game's pipeline hardcodes into its summary.json
+ * (scripts/emit.ts), so asserting them below is the cross-repo drift gate for
+ * those two constants. `primary` mirrors each game's theme.css.
+ */
+const GAMES = [
+  { slug: '2xko', id: '2xko', name: '2XKO', primary: '#ff2e88', charPath: '/2xko/champions/ekko' },
+  // charPath null ⇒ sampled from the game's own sitemap in the loop below
+  { slug: 'tekken', id: 'tekken8', name: 'Tekken 8', primary: '#e13048', charPath: null },
+  {
+    slug: 'sf6',
+    id: 'sf6',
+    name: 'Street Fighter 6',
+    primary: '#ff7d00',
+    charPath: '/sf6/characters/ryu',
+  },
+];
+
+/** slug → the live summary payload, filled by the static block, read by the
+ *  browser block to check the rendered counts against the real numbers. */
+const summaries = {};
 
 let pass = 0;
 let fail = 0;
@@ -78,7 +106,7 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
 
-  for (const slug of ['2xko', 'tekken', 'sf6']) {
+  for (const { slug } of GAMES) {
     const res = await fetch(`${HOST}/${slug}/sitemap.xml`);
     const ok = res.status === 200;
     check(`/${slug}/sitemap.xml serves through the shell (${res.status})`, ok);
@@ -92,6 +120,43 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
         bad.slice(0, 3).join(', '),
       );
     }
+  }
+
+  // ── the selector's count source, THROUGH the apex (Phase 6) ─────────────
+  // Same-origin is the point: these are the exact URLs the selector fetches
+  // client-side, so if the rewrite or the game's build:before copy is missing,
+  // it fails here rather than silently omitting a count in the browser.
+  console.log('\n[summary.json through the apex]');
+  for (const g of GAMES) {
+    const path = `/${g.slug}/data/summary.json`;
+    const res = await fetch(`${HOST}${path}`);
+    if (res.status !== 200) {
+      check(`${path} serves 200 (${res.status})`, false);
+      continue;
+    }
+    let payload;
+    try {
+      payload = JSON.parse(await res.text());
+    } catch (e) {
+      check(`${path} is valid JSON`, false, e.message);
+      continue;
+    }
+    summaries[g.slug] = payload;
+    // `updated` is asserted, not just printed: a build timestamp here would
+    // rewrite the file on every zero-new-video day and defeat the game's cron
+    // commit guard. It must be a real date and it must not be in the future —
+    // the game's own e2e pins it to the newest replay.
+    const today = new Date().toISOString().slice(0, 10);
+    check(
+      `${path}: 200, game=${JSON.stringify(payload.game)}, replays=${payload.replays}, updated=${payload.updated}`,
+      payload.game === g.id &&
+        payload.name === g.name &&
+        typeof payload.replays === 'number' &&
+        payload.replays > 0 &&
+        /^\d{4}-\d{2}-\d{2}$/.test(payload.updated ?? '') &&
+        payload.updated <= today,
+      `expected game=${g.id} name=${g.name} replays>0 updated<=${today}`,
+    );
   }
 
   // legacy 301s → final 200 (the chain is followed hop by hop)
@@ -158,12 +223,181 @@ try {
   );
   check(`ItemList JSON-LD parses with 3 games`, sel.itemList === 3);
 
+  // ── selector counts + aggregate (Phase 6) ──
+  // The counts arrive client-side, so they are read from the LIVE page rather
+  // than the prerendered HTML — which is exactly where they must not be.
+  console.log('\n[/ counts]');
+  const num = (s) => Number((s?.match(/[\d,]+/)?.[0] ?? '').replace(/,/g, ''));
+  const waitForCounts = (n) =>
+    page
+      .waitForFunction(
+        (expected) =>
+          [...document.querySelectorAll('a.game-card .count')].filter((el) => el.textContent.trim())
+            .length >= expected,
+        { timeout: 15000 },
+        n,
+      )
+      .catch(() => {});
+  /**
+   * Text + the layout-shift evidence. `gridTop` is the one that matters: BOTH
+   * count surfaces are swapped client-side, and an earlier revision reserved
+   * only the card line — the hero pill still reflowed one line → two on narrow
+   * viewports and pushed the whole grid down 18px, invisible to a card-height
+   * check at 1280px. Measure where the grid actually starts.
+   */
+  const readSelector = () =>
+    page.evaluate(() => ({
+      cards: Object.fromEntries(
+        [...document.querySelectorAll('a.game-card')].map((a) => [
+          a.getAttribute('href'),
+          {
+            count: a.querySelector('.count')?.textContent.trim() ?? null,
+            height: Math.round(a.getBoundingClientRect().height),
+          },
+        ]),
+      ),
+      aggregate: document.querySelector('p.aggregate')?.textContent.trim() ?? '',
+      pillHeight: Math.round(
+        document.querySelector('p.aggregate')?.getBoundingClientRect().height ?? -1,
+      ),
+      gridTop: Math.round(
+        (document.querySelector('section[aria-label="Games"]')?.getBoundingClientRect().top ?? -1) +
+          window.scrollY,
+      ),
+    }));
+
+  await waitForCounts(GAMES.length);
+  const live = await readSelector();
+  // A BOUNDED window, not a bare ≥: the lower edge tolerates a cron landing
+  // between the fetch above and this page load, the upper edge is what stops a
+  // card that renders the wrong game's count — or the archive total — from
+  // passing. A single daily refresh moves a game by well under 10%.
+  const within = (shown, fetched) => fetched > 0 && shown >= fetched && shown < fetched * 1.1;
+  for (const g of GAMES) {
+    const fetched = summaries[g.slug]?.replays ?? 0;
+    check(
+      `/${g.slug} card renders ITS OWN count (${JSON.stringify(live.cards[`/${g.slug}`]?.count)}, fetched ${fetched})`,
+      within(num(live.cards[`/${g.slug}`]?.count), fetched),
+    );
+  }
+  const liveTotal = GAMES.reduce((sum, g) => sum + (summaries[g.slug]?.replays ?? 0), 0);
+  check(
+    `aggregate line totals the archive (${JSON.stringify(live.aggregate)} ≈ ${liveTotal})`,
+    within(num(live.aggregate), liveTotal) && live.aggregate.includes('replays across 3 games'),
+  );
+
+  // ── POSITIVE CONTROL: block summaries through the browser ──
+  // Proves the graceful path is real rather than assumed. Two blocked states,
+  // because they fail differently:
+  //
+  //   ONE blocked  — that card omits its count and drops out of the aggregate
+  //                  while the other two are untouched.
+  //   ALL blocked  — the state every visitor sees on FIRST PAINT (the counts
+  //                  are fetched client-side, so the prerendered HTML has
+  //                  none). This is where the reserved count line earns its
+  //                  keep: the grid row stretches every card to the tallest, so
+  //                  losing ONE card's count can't move anything — only losing
+  //                  them all can, and that is exactly the first-paint →
+  //                  counts-arrive transition a real visitor sees.
+  const heightsOf = (s) =>
+    `cards ${Object.values(s.cards)
+      .map((c) => c.height)
+      .join('/')} · pill ${s.pillHeight} · gridTop ${s.gridTop}`;
+  const sameLayout = (a, b) =>
+    GAMES.every((g) => a.cards[`/${g.slug}`]?.height === b.cards[`/${g.slug}`]?.height) &&
+    a.pillHeight === b.pillHeight &&
+    a.gridTop === b.gridTop;
+
+  /** Run the selector with `slugs`' summaries aborted at the network layer. */
+  const withBlocked = async (slugs) => {
+    const paths = new Set(slugs.map((s) => `/${s}/data/summary.json`));
+    const block = (req) => {
+      if (paths.has(new URL(req.url()).pathname)) req.abort();
+      else req.continue();
+    };
+    await page.setRequestInterception(true);
+    page.on('request', block);
+    try {
+      await page.goto(`${HOST}/`, { waitUntil: 'networkidle0' });
+      const expected = GAMES.length - slugs.length;
+      if (expected > 0) {
+        await waitForCounts(expected);
+      } else {
+        // waitForCounts(0) is already true before a single fetch has even
+        // failed, so the all-blocked pass settles on the requests instead
+        await page.waitForNetworkIdle({ idleTime: 500, timeout: 15000 }).catch(() => {});
+      }
+      return await readSelector();
+    } finally {
+      page.off('request', block);
+      await page.setRequestInterception(false);
+    }
+  };
+
+  console.log('\n[/ positive control — /sf6/data/summary.json blocked]');
+  const BLOCKED = 'sf6';
+  const partial = await withBlocked([BLOCKED]);
+  check(
+    `blocked ${BLOCKED} card omits its count (${JSON.stringify(partial.cards[`/${BLOCKED}`]?.count)})`,
+    partial.cards[`/${BLOCKED}`]?.count === '',
+  );
+  for (const g of GAMES.filter((g) => g.slug !== BLOCKED)) {
+    check(
+      `/${g.slug} card unaffected by the block (${JSON.stringify(partial.cards[`/${g.slug}`]?.count)})`,
+      within(num(partial.cards[`/${g.slug}`]?.count), summaries[g.slug]?.replays ?? 0),
+    );
+  }
+  const remaining = GAMES.filter((g) => g.slug !== BLOCKED).reduce(
+    (sum, g) => sum + (summaries[g.slug]?.replays ?? 0),
+    0,
+  );
+  check(
+    `aggregate sums only the two that resolved (${JSON.stringify(partial.aggregate)} ≈ ${remaining}, < ${liveTotal})`,
+    within(num(partial.aggregate), remaining) && num(partial.aggregate) < liveTotal,
+  );
+  check(
+    `layout intact with one blocked (${heightsOf(partial)} vs ${heightsOf(live)})`,
+    sameLayout(live, partial),
+    JSON.stringify({ served: live, blocked: partial }),
+  );
+
+  console.log('\n[/ positive control — every summary blocked (the first-paint state)]');
+  const none = await withBlocked(GAMES.map((g) => g.slug));
+  check(
+    `every card omits its count (${JSON.stringify(Object.values(none.cards).map((c) => c.count))})`,
+    Object.values(none.cards).every((c) => c.count === ''),
+  );
+  check(
+    `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
+    none.aggregate === '3 games in the archive',
+  );
+  check(
+    `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(live)})`,
+    sameLayout(live, none),
+    JSON.stringify({ none, served: live }),
+  );
+
+  // ── the same transition at PHONE widths ──
+  // 1280px is where the check above is blind: the hero pill fits on one line
+  // either way there, so a reflow only shows up narrow. These are the widths
+  // where the fallback string and the upgraded string differ in line count.
+  console.log('\n[/ no layout shift at phone widths]');
+  for (const width of [320, 360, 375]) {
+    await page.setViewport({ width, height: 900 });
+    const blank = await withBlocked(GAMES.map((g) => g.slug));
+    await page.goto(`${HOST}/`, { waitUntil: 'networkidle0' });
+    await waitForCounts(GAMES.length);
+    const filled = await readSelector();
+    check(
+      `${width}px: grid holds its position (top ${blank.gridTop} → ${filled.gridTop}, pill ${blank.pillHeight} → ${filled.pillHeight})`,
+      blank.gridTop === filled.gridTop && blank.pillHeight === filled.pillHeight,
+      JSON.stringify({ blank, filled }),
+    );
+  }
+  await page.setViewport({ width: 1280, height: 900 });
+
   // ── each game through the shell host ──
-  for (const g of [
-    { slug: '2xko', primary: '#ff2e88', charPath: '/2xko/champions/ekko' },
-    { slug: 'tekken', primary: '#e13048', charPath: null }, // sampled from its sitemap
-    { slug: 'sf6', primary: '#ff7d00', charPath: '/sf6/characters/ryu' },
-  ]) {
+  for (const g of GAMES) {
     console.log(`\n[/${g.slug}/ through the shell]`);
     await page.goto(`${HOST}/${g.slug}/`, { waitUntil: 'networkidle0' });
 

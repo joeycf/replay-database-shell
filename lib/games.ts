@@ -36,10 +36,13 @@ export interface ShellGame {
   tagline: string;
   /** Absolute /<slug>/sitemap.xml on the apex — referenced by the index. */
   sitemapUrl: string;
-  /** Build-time count source (PLAN §5 A.4). summary.json is emitted in Phase 6;
-   *  until it exists this 404s and the count is omitted (never faked, and never
-   *  fetched from the 1 MB replays.json). Points at the game's own production
-   *  alias under its post-flip base so it resolves independent of the apex. */
+  /** Count source for the selector card (PLAN §5 A.4 / Phase 6). SUBPATH-
+   *  RELATIVE on purpose: the selector fetches it client-side, so it must go
+   *  through the shell's own rewrite (vercel.json) and stay SAME-ORIGIN — an
+   *  absolute game-host URL would be cross-origin from the apex and the browser
+   *  would block it (the games send no CORS headers). Emitted by each game's
+   *  pipeline; a game that hasn't shipped it yet 404s and its count is simply
+   *  omitted (never faked, and never derived from the 1 MB replays.json). */
   summaryUrl: string;
 }
 
@@ -55,7 +58,7 @@ export const GAMES: ShellGame[] = [
     video: '/video/games/2xko.mp4',
     tagline: 'Champion usage · team pairings · meta over time',
     sitemapUrl: `${SITE_URL}/2xko/sitemap.xml`,
-    summaryUrl: 'https://2xko-replay-database.vercel.app/2xko/data/summary.json',
+    summaryUrl: '/2xko/data/summary.json',
   },
   {
     id: 'tekken8',
@@ -68,7 +71,7 @@ export const GAMES: ShellGame[] = [
     video: '/video/games/tekken.mp4',
     tagline: 'Character usage · rank ladder · meta over time',
     sitemapUrl: `${SITE_URL}/tekken/sitemap.xml`,
-    summaryUrl: 'https://tekken-replay-database.vercel.app/tekken/data/summary.json',
+    summaryUrl: '/tekken/data/summary.json',
   },
   {
     // APPEND, don't insert: verify-shell asserts the ItemList JSON-LD
@@ -84,6 +87,6 @@ export const GAMES: ShellGame[] = [
     art: '/img/games/sf6.png',
     tagline: 'Character usage · matchup data · meta over time',
     sitemapUrl: `${SITE_URL}/sf6/sitemap.xml`,
-    summaryUrl: 'https://sf6-replay-database.vercel.app/sf6/data/summary.json',
+    summaryUrl: '/sf6/data/summary.json',
   },
 ];

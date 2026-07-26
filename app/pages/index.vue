@@ -18,8 +18,10 @@
           The competitive fighting-game replay archive. Browse, filter, and study replays across
           every game in the collection.
         </p>
+        <!-- `.aggregate` / `.count` are the gates' stable hooks
+             (scripts/verify-shell.mjs, scripts/verify-cutover.mjs). -->
         <p
-          class="mt-6 inline-flex items-center gap-2 border border-border-subtle bg-surface-sunken px-4 py-2 font-mono text-[12px] uppercase tracking-label text-text-muted cut-sm"
+          class="aggregate mt-6 inline-flex items-center gap-2 border border-border-subtle bg-surface-sunken px-4 py-2 font-mono text-[12px] uppercase tracking-label text-text-muted cut-sm"
         >
           <span
             class="inline-block h-1.5 w-1.5 rounded-full bg-primary"
@@ -81,11 +83,13 @@
               <span class="mt-1 truncate font-mono text-[11px] text-text-muted">{{
                 g.tagline
               }}</span>
-              <span
-                v-if="countFor(g.id) !== null"
-                class="mt-3 font-ui text-[13px] font-semibold text-text-secondary"
-              >
-                {{ fmt(countFor(g.id)!) }} replays
+              <!-- The count line keeps its box whether or not the number
+                   arrives: a summary that 404s (a game that hasn't shipped one)
+                   or lands late must not shift the card. -->
+              <span class="count mt-3 block font-ui text-[13px] font-semibold text-text-secondary">
+                <template v-if="countFor(g.id) !== null"
+                  >{{ fmt(countFor(g.id)!) }} replays</template
+                >
               </span>
             </span>
 
@@ -126,40 +130,43 @@ const games = useAppConfig().games;
 const site = useSiteOrigin();
 
 /**
- * Build-time replay counts (PLAN §5 A.4). Each game's summary.json is emitted
- * in Phase 6; until it exists this fetch 404s and the count is OMITTED (never
- * faked, and never fetched from the 1 MB replays.json). Runs server-side at
- * prerender, so the number is baked into the static HTML. Shape-liberal so a
- * Phase-6 summary with the count under `replays` / `count` / `totals.replays`
- * all work; anything else omits safely.
+ * Per-game replay counts, read from each game's data/summary.json (PLAN §5 A.4,
+ * shipped in Phase 6). Two deliberate properties:
+ *
+ *  • SAME-ORIGIN — `summaryUrl` is subpath-relative (`/2xko/data/summary.json`),
+ *    so the request goes through the shell's own rewrites (vercel.json) and
+ *    never leaves the apex origin. Absolute game-host URLs would be
+ *    cross-origin here and the browser would block them: the game deployments
+ *    send no CORS headers.
+ *  • CLIENT-SIDE — the prerenderer serves only this app's own three routes, so
+ *    a build-time fetch of a game subpath could never resolve; and a number
+ *    baked into static HTML would stale between shell deploys anyway. The
+ *    prerendered HTML (and the meta/OG descriptions) therefore carry no counts.
+ *
+ * Each card lights up as its own fetch lands. A failure — a game that hasn't
+ * shipped its summary yet, a network error, a malformed payload — is dropped
+ * silently: the count line is already reserved, so nothing moves. Numbers are
+ * never faked and never derived from the 1 MB replays.json.
  */
-const pickCount = (summary: Record<string, unknown>): number | null => {
-  const totals = summary.totals as Record<string, unknown> | undefined;
-  const candidates = [summary.replays, summary.count, totals?.replays];
-  for (const c of candidates) {
-    if (typeof c === 'number' && Number.isFinite(c)) return c;
-  }
-  return null;
+const counts = ref<Record<string, number>>({});
+
+const replayCount = (summary: unknown): number | null => {
+  const n = (summary as { replays?: unknown } | null)?.replays;
+  return typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : null;
 };
 
-const { data: counts } = await useAsyncData('selector-game-counts', async () => {
-  const entries = await Promise.all(
+onMounted(() => {
+  void Promise.allSettled(
     games.map(async (g) => {
-      try {
-        const summary = await $fetch<Record<string, unknown>>(g.summaryUrl, {
-          timeout: 5000,
-          responseType: 'json',
-        });
-        return [g.id, pickCount(summary)] as const;
-      } catch {
-        return [g.id, null] as const;
-      }
+      const res = await fetch(g.summaryUrl, { headers: { accept: 'application/json' } });
+      if (!res.ok) throw new Error(`${g.summaryUrl} → ${res.status}`);
+      const n = replayCount(await res.json());
+      if (n !== null) counts.value[g.id] = n;
     }),
   );
-  return Object.fromEntries(entries) as Record<string, number | null>;
 });
 
-const countFor = (id: string): number | null => counts.value?.[id] ?? null;
+const countFor = (id: string): number | null => counts.value[id] ?? null;
 const fmt = (n: number) => n.toLocaleString('en-US');
 
 /**
@@ -186,10 +193,16 @@ const stopArt = (e: Event) => {
   }
 };
 
-const totalReplays = computed(() => games.reduce((sum, g) => sum + (countFor(g.id) ?? 0), 0));
+/** The hero line upgrades as soon as ANY summary lands — the sum of what has
+ *  actually resolved, never a projection over the games still missing. With
+ *  nothing resolved (the prerendered state, and the state a fully offline
+ *  rollout stays in) the game-count line stands unchanged. */
+const resolvedCounts = computed(() =>
+  games.map((g) => countFor(g.id)).filter((n): n is number => n !== null),
+);
 const aggregate = computed(() =>
-  totalReplays.value > 0
-    ? `${fmt(totalReplays.value)} replays across ${games.length} games`
+  resolvedCounts.value.length > 0
+    ? `${fmt(resolvedCounts.value.reduce((sum, n) => sum + n, 0))} replays across ${games.length} games`
     : `${games.length} games in the archive`,
 );
 
@@ -234,6 +247,28 @@ useJsonLd([
 }
 .accent-bar {
   background: var(--accent);
+}
+/* Reserve exactly one line for the replay count so the card's height is the
+   same before and after the summary fetch resolves (or fails). */
+.count {
+  min-height: 1.25rem;
+  line-height: 1.25rem;
+}
+/* The hero pill swaps its text client-side too, and the upgraded string
+   ("39,189 replays across 3 games") wraps to two lines on narrow viewports
+   where the fallback ("3 games in the archive") does not — which pushed the
+   whole card grid down 18px the moment the counts landed (measured at 320 and
+   360 px). Below sm, reserve both lines up front; from sm up neither string
+   wraps, so the pill keeps its natural single-line height. The breakpoint is
+   deliberately the sm boundary rather than the exact wrap width, which migrates
+   upward as the archive total gains digits. */
+.aggregate {
+  min-height: 3.375rem; /* 2 × 1.125rem line + 2 × 0.5rem of py-2 */
+}
+@media (min-width: 40rem) {
+  .aggregate {
+    min-height: 0;
+  }
 }
 .art {
   transition: transform 0.4s var(--ease-snap);
