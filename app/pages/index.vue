@@ -36,7 +36,7 @@
            router — /2xko and /tekken are not routes in this app. -->
       <section
         aria-label="Games"
-        class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24 lg:grid-cols-3"
+        class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24"
       >
         <a
           v-for="g in games"

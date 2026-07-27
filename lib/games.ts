@@ -29,8 +29,7 @@ export interface ShellGame {
   art: string;
   /** Self-hosted muted hover-loop (public path), trimmed from the game's own
    *  hero video. Plays over `art` while the selector card is hovered/focused.
-   *  OPTIONAL: a game without one simply shows its static key art (SF6 ships
-   *  no hero video, so there is nothing to trim a loop from). */
+   *  OPTIONAL: a game without one simply shows its static key art. */
   video?: string;
   /** One-line card blurb (the feature triplet from the game's key art). */
   tagline: string;
@@ -85,6 +84,7 @@ export const GAMES: ShellGame[] = [
     // gates compare against lowercased computed values
     accent: '#ff7d00',
     art: '/img/games/sf6.png',
+    video: '/video/games/sf6.mp4',
     tagline: 'Character usage · matchup data · meta over time',
     sitemapUrl: `${SITE_URL}/sf6/sitemap.xml`,
     summaryUrl: '/sf6/data/summary.json',
