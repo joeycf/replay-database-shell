@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   // patch facet, source groups) and inert on a three-route selector, and v0.6.1
   // is behaviour-only (shared fetch options). Kept in step so the whole
   // platform sits on one tag.
-  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.6.1', { install: true }]],
+  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.6.2', { install: true }]],
 
   compatibilityDate: '2025-07-01',
 
