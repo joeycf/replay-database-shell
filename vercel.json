@@ -154,6 +154,18 @@
   ],
   "rewrites": [
     {
+      "source": "/2xko-insights/:path*",
+      "destination": "https://2xko-replay-database.vercel.app/_vercel/insights/:path*"
+    },
+    {
+      "source": "/tekken-insights/:path*",
+      "destination": "https://tekken-replay-database.vercel.app/_vercel/insights/:path*"
+    },
+    {
+      "source": "/sf6-insights/:path*",
+      "destination": "https://sf6-replay-database.vercel.app/_vercel/insights/:path*"
+    },
+    {
       "source": "/2xko",
       "destination": "https://2xko-replay-database.vercel.app/2xko"
     },

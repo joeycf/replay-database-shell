@@ -53,6 +53,14 @@ const GAMES = [
   },
 ];
 
+/** Web Analytics proxy prefix per game — each is one rewrite in this repo's
+ *  vercel.json AND one `observability.insights` in that game's app.config.ts.
+ *  Restated here so gate 6 fails loudly if any of the three drifts. */
+const INSIGHTS_PREFIX = (slug) => `/${slug}-insights`;
+/** Speed Insights is single-project on Hobby: every game reports to whichever
+ *  project owns the apex path, so this one is NOT per-game. */
+const SPEED_INSIGHTS_PREFIX = '/_vercel/speed-insights';
+
 /** slug → the live summary payload, filled by the static block, read by the
  *  browser block to check the rendered counts against the real numbers. */
 const summaries = {};
@@ -399,7 +407,56 @@ try {
   // ── each game through the shell host ──
   for (const g of GAMES) {
     console.log(`\n[/${g.slug}/ through the shell]`);
+
+    // ── 6. observability resolves THROUGH the apex ──
+    // The gate that did not exist when the cutover killed analytics for ~10
+    // days. Vercel bakes a per-project obfuscated path into each build
+    // ("/41a6d9d2116e7933/script.js"); proxied onto the apex it 404s, so both
+    // SDKs died silently and every dashboard read zero. Only a load through
+    // THIS host can prove the endpoints resolve — the game's own e2e sees a
+    // static dir where nothing resolves.
+    //
+    // No analytics pollution: the insights script no-ops when
+    // navigator.webdriver is set, so the script LOADS (which is what broke and
+    // what is asserted) but the beacon never fires. Safe against production.
+    const observability = [];
+    const onObservability = (res) => {
+      const p = new URL(res.url()).pathname;
+      if (/insights|vitals/.test(p)) observability.push({ p, status: res.status() });
+    };
+    page.on('response', onObservability);
+
     await page.goto(`${HOST}/${g.slug}/`, { waitUntil: 'networkidle0' });
+    // both SDKs attach on idle, after networkidle0 has already resolved
+    await new Promise((r) => setTimeout(r, 4000));
+    page.off('response', onObservability);
+
+    const broken = observability.filter((o) => o.status >= 400);
+    check(
+      `no failed analytics/vitals request (${observability.length} seen)`,
+      observability.length > 0 && broken.length === 0,
+      observability.length === 0
+        ? 'no insights request at all — the SDKs did not attach'
+        : broken.map((b) => `${b.status} ${b.p}`).join(', '),
+    );
+    check(
+      `insights script resolves under ${INSIGHTS_PREFIX(g.slug)} (own project)`,
+      observability.some((o) => o.p.startsWith(`${INSIGHTS_PREFIX(g.slug)}/`) && o.status < 400),
+      observability.map((o) => `${o.status} ${o.p}`).join(', '),
+    );
+    check(
+      `vitals script resolves under ${SPEED_INSIGHTS_PREFIX} (shell project)`,
+      observability.some((o) => o.p.startsWith(`${SPEED_INSIGHTS_PREFIX}/`) && o.status < 400),
+      observability.map((o) => `${o.status} ${o.p}`).join(', '),
+    );
+    // THE REGRESSION ITSELF: a 16-hex baked path means the explicit endpoints
+    // stopped beating VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG.
+    const baked = observability.filter((o) => /^\/[0-9a-f]{16}\//.test(o.p));
+    check(
+      `no baked per-project hash path`,
+      baked.length === 0,
+      baked.map((b) => b.p).join(', '),
+    );
 
     const home = await page.evaluate(() => ({
       primary: getComputedStyle(document.documentElement)

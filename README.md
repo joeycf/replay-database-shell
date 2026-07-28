@@ -137,7 +137,35 @@ rest is dashboard config:
 ## Analytics
 
 Inherited from the engine — Vercel **Web Analytics** and **Speed Insights**,
-client-only and inert outside production. Nothing to configure here.
+client-only and inert outside production. The shell's own base is `/`, so it
+needs no endpoint config; it does, however, **carry the routing for everyone
+else**.
+
+Both SDKs resolve their script and beacons against a **same-origin** prefix, so
+the project credited is whichever one owns that path on the domain being
+browsed. Every page under `/2xko`, `/tekken` and `/sf6` is served on the apex —
+so without help, all of their data would land here.
+
+`vercel.json` therefore carries one insights rewrite per game:
+
+```
+/<slug>-insights/:path*  →  https://<slug>-replay-database.vercel.app/_vercel/insights/:path*
+```
+
+Each is paired 1:1 with `observability.insights: '/<slug>-insights'` in that
+game's `app.config.ts`. **The pair ships together or every beacon 404s** — and
+404s silently, which is exactly how the Phase-5 cutover lost ~10 days of
+analytics for all three games. `npm run verify:cutover` gates it.
+
+Same-origin is not incidental: the child projects' `/_vercel/insights/*`
+endpoints send no `Access-Control-Allow-*` headers, so pointing a game straight
+at its own absolute URL would die at preflight. Proxying keeps the beacon
+first-party.
+
+**Speed Insights is deliberately NOT per-game.** It is single-project on the
+Hobby plan, so every game's vitals go to the stable `/_vercel/speed-insights/*`
+on the apex — i.e. to this project. Do not add per-game vitals rewrites without
+checking that limit first.
 
 ## Adding a game to the selector
 
@@ -148,7 +176,11 @@ client-only and inert outside production. Nothing to configure here.
 2. Drop the key art at `public/img/games/<slug>.png` and the muted hover loop at
    `public/video/games/<slug>.mp4`.
 3. Add the rewrite pair to `vercel.json` — both `/<slug>` and `/<slug>/:path*`,
-   pointing at the game's own deployment.
+   pointing at the game's own deployment. Add the insights rewrite in the same
+   commit: `/<slug>-insights/:path*` →
+   `https://<slug>-replay-database.vercel.app/_vercel/insights/:path*`, matching
+   the game's `observability.insights`. Skip it and that game's analytics is
+   dead on arrival, with nothing in any dashboard to tell you.
 4. Confirm the game app commits `app.baseURL` defaulting to `/<slug>/`, or the
    proxied build will resolve its assets against the wrong base.
 5. `npm run generate && npm run verify:shell`, then
