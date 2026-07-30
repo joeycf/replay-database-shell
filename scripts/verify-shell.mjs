@@ -10,8 +10,12 @@ import puppeteer from 'puppeteer-core';
  *
  *   1. / renders the selector: umbrella theme (computed --color-primary =
  *      ReplayDB teal), BrandLogo lockup, one card per game with its own accent,
- *      plain-<a> hrefs at /2xko | /tekken, NO game nav (Browse/Stats/…).
- *   2. ItemList JSON-LD parses and enumerates both games at apex URLs.
+ *      plain-<a> hrefs at /2xko | /tekken, NO game nav (Browse/Stats/…), plus
+ *      ONE non-navigable "Coming Soon" card whose badge is present in the
+ *      prerendered HTML without hover or JS.
+ *   2. ItemList JSON-LD parses and enumerates both games at apex URLs — and the
+ *      sitemap index lists exactly the games that HAVE replays. An
+ *      announced-but-unshipped game must reach neither (see lib/games.ts).
  *   3. Per-card replay counts + the aggregate hero line, and the POSITIVE
  *      CONTROL: with one game's summary.json blocked, that card omits its count
  *      while the card heights hold and the aggregate sums only what resolved
@@ -211,6 +215,18 @@ try {
     !!sf6 && sf6.accent === '#ff7d00' && sf6.name === 'Street Fighter 6' && sf6.artLoaded,
   );
 
+  // The card-count selector above is ANCHOR-scoped (`a.game-card`), so a
+  // non-anchor coming-soon card is invisible to it by construction. Assert the
+  // CLASS-only selector too: if someone later reuses .game-card on the upcoming
+  // card, it inherits the hover-lift and this fails HERE, loudly, instead of
+  // quietly shipping a card that looks clickable.
+  const gameCardClass = await page.evaluate(() => document.querySelectorAll('.game-card').length);
+  check(
+    `.game-card is the three LIVE cards and nothing else`,
+    gameCardClass === 3,
+    `${gameCardClass} found`,
+  );
+
   const navLeak = await page.evaluate(
     () =>
       [
@@ -234,6 +250,107 @@ try {
       itemList.itemListElement[1].url === 'https://replaydatabase.com/tekken' &&
       itemList.itemListElement[2].url === 'https://replaydatabase.com/sf6',
     JSON.stringify(itemList),
+  );
+  // THE load-bearing guard for coming-soon games. An upcoming game in structured
+  // data is a lie to search engines, so the ItemList must carry the three games
+  // that actually have replays and nothing else. lib/games.ts makes that
+  // structural (UPCOMING has no `url` field at all) — this proves it holds.
+  check(
+    `ItemList carries NO upcoming game`,
+    !!itemList &&
+      !JSON.stringify(itemList.itemListElement ?? [])
+        .toLowerCase()
+        .includes('tokon'),
+    JSON.stringify(itemList?.itemListElement),
+  );
+
+  // ── 1a. the sitemap index, same guard ────────────────────────────────────
+  // Read off disk rather than over the wire: the index is written by
+  // modules/sitemap-index.ts on prerender:done, and it is a build artifact, not
+  // a route. Exactly one <sitemap> per game plus the shell's own page sitemap.
+  const sitemapIndex = readFileSync(join(STATIC_DIR, 'sitemap.xml'), 'utf8');
+  const sitemapChildren = [...sitemapIndex.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  check(
+    `sitemap index lists exactly 3 game children + the page sitemap (${sitemapChildren.length})`,
+    sitemapChildren.length === 4 &&
+      sitemapChildren.includes('https://replaydatabase.com/sitemap-pages.xml') &&
+      ['2xko', 'tekken', 'sf6'].every((s) =>
+        sitemapChildren.includes(`https://replaydatabase.com/${s}/sitemap.xml`),
+      ),
+    sitemapChildren.join(', '),
+  );
+  check(
+    `sitemap index carries NO upcoming game`,
+    !sitemapIndex.toLowerCase().includes('tokon'),
+    sitemapChildren.join(', '),
+  );
+
+  // ── 1a2. the upcoming card: visible, announced, and NOT navigable ────────
+  // No hover simulation anywhere in this block — that is the point. There is no
+  // hover on touch, so a hover-only "Coming Soon" reveal would leave the card
+  // looking broken on a phone.
+  const up = await page.evaluate(() => {
+    const els = [...document.querySelectorAll('.upcoming-card')];
+    return els.map((el) => {
+      const badge = el.querySelector('.badge');
+      const rect = badge?.getBoundingClientRect();
+      const cs = badge ? getComputedStyle(badge) : null;
+      const img = el.querySelector('img');
+      return {
+        tag: el.tagName,
+        text: el.textContent.replace(/\s+/g, ' ').trim(),
+        hasHref: el.hasAttribute('href'),
+        insideAnchor: el.closest('a') !== null,
+        anchorsWithin: el.querySelectorAll('a[href]').length,
+        focusable: el.hasAttribute('tabindex'),
+        accent: cs && getComputedStyle(el).getPropertyValue('--accent').trim(),
+        badgeText: badge?.textContent.trim() ?? null,
+        badgeVisible: !!cs && cs.opacity !== '0' && cs.visibility !== 'hidden' && rect.width > 0,
+        artWidth: img?.naturalWidth ?? 0,
+      };
+    });
+  });
+  check(`1 upcoming card renders`, up.length === 1, JSON.stringify(up));
+  const tokon = up[0];
+  check(
+    `upcoming card is not navigable (tag=${tokon?.tag}, href=${tokon?.hasHref}, inside <a>=${tokon?.insideAnchor}, anchors within=${tokon?.anchorsWithin})`,
+    !!tokon &&
+      tokon.tag !== 'A' &&
+      !tokon.hasHref &&
+      !tokon.insideAnchor &&
+      tokon.anchorsWithin === 0,
+  );
+  check(`upcoming card is not in the tab order (no tabindex)`, !!tokon && !tokon.focusable);
+  check(
+    `"Coming Soon" badge is in the DOM and visible WITHOUT hover (${JSON.stringify(tokon?.badgeText)})`,
+    !!tokon && tokon.badgeText === 'Coming Soon' && tokon.badgeVisible,
+    JSON.stringify(tokon),
+  );
+  check(
+    `upcoming card: accent #00a6ff, art loads at 1200px (${tokon?.accent}, ${tokon?.artWidth})`,
+    !!tokon && tokon.accent === '#00a6ff' && tokon.artWidth === 1200,
+  );
+  check(
+    `upcoming card carries no date (a date in the card would go stale on its own)`,
+    // Whole words only — an unanchored month prefix matches "MARvel".
+    !!tokon &&
+      !/\b(20\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b\s+\d/i.test(tokon.text) &&
+      !/\b20\d\d\b/.test(tokon.text),
+    tokon?.text,
+  );
+
+  // The checks above read the hydrated DOM. The SERVED html is the stronger
+  // proof: it shows the announcement needs neither hover nor JavaScript, and
+  // that nothing on the page links at the slug the game will one day own.
+  const servedHtml = readFileSync(join(STATIC_DIR, 'index.html'), 'utf8');
+  check(
+    `"Coming Soon" is in the PRERENDERED html (no JS needed)`,
+    servedHtml.includes('Coming Soon'),
+  );
+  check(
+    `prerendered html has no /tokon link`,
+    !/href="[^"]*\/tokon/.test(servedHtml),
+    servedHtml.match(/href="[^"]*tokon[^"]*"/g)?.join(', '),
   );
 
   // ── 1b. per-card counts + the aggregate line (Phase 6) ───────────────────
@@ -403,6 +520,56 @@ try {
       before.gridTop === after.gridTop && before.pillHeight === after.pillHeight,
       JSON.stringify({ before, after }),
     );
+  }
+  await page.setViewport({ width: 1280, height: 900 });
+
+  // ── 1e. the grid holds four cards in every regime ────────────────────────
+  // 380 = 1-up (grid-cols-1), 640 = the sm 2-up boundary (40rem), 1280 = the
+  // max-w-[1120px] 2-up. FOUR cards therefore fill an even 2×2 from sm up. There
+  // is deliberately no lg:grid-cols-3 — commit 5731651 removed it ("max cards to
+  // 2 per row"), and re-adding it would orphan the fourth card on its own row.
+  // Equal widths per row is the "not squeezed" half; equal row heights is what
+  // the upcoming card's reserved .count-slot buys.
+  console.log('\n[/] grid regimes');
+  const SHOT_DIR = process.env.SHOT_DIR || '/tmp';
+  for (const width of [380, 640, 1280]) {
+    await page.setViewport({ width, height: 1400 });
+    currentPage = `/ (${width}px)`;
+    await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
+    await waitForCounts(3).catch(() => {});
+    const grid = await page.evaluate(() => {
+      const sec = document.querySelector('section[aria-label="Games"]');
+      const kids = [...sec.children];
+      const top = (k) => Math.round(k.getBoundingClientRect().top);
+      const rows = [...new Set(kids.map(top))];
+      return {
+        cols: getComputedStyle(sec).gridTemplateColumns.split(' ').length,
+        children: kids.length,
+        perRow: rows.map((t) => kids.filter((k) => top(k) === t).length),
+        widths: kids.map((k) => Math.round(k.getBoundingClientRect().width)),
+        // Grouped BY ROW: stacked 1-up cards are allowed to differ, but two
+        // cards sharing a row must not — that is what the reserved count line
+        // on the upcoming card is for.
+        rowHeights: rows.map((t) =>
+          kids.filter((k) => top(k) === t).map((k) => Math.round(k.getBoundingClientRect().height)),
+        ),
+      };
+    });
+    const perRow = width < 640 ? 1 : 2;
+    check(
+      `${width}px: 4 cards in ${grid.cols} col(s), rows ${JSON.stringify(grid.perRow)}, widths ${JSON.stringify(grid.widths)} — no orphan, none squeezed`,
+      grid.children === 4 &&
+        grid.cols === perRow &&
+        grid.perRow.every((n) => n === perRow) &&
+        new Set(grid.widths).size === 1,
+      JSON.stringify(grid),
+    );
+    check(
+      `${width}px: every grid row is level (${JSON.stringify(grid.rowHeights)})`,
+      grid.rowHeights.every((row) => new Set(row).size === 1),
+      JSON.stringify(grid.rowHeights),
+    );
+    await page.screenshot({ path: `${SHOT_DIR}/shell-selector-${width}.png`, fullPage: true });
   }
   await page.setViewport({ width: 1280, height: 900 });
 

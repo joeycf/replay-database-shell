@@ -7,7 +7,9 @@ import puppeteer from 'puppeteer-core';
  *   node scripts/verify-cutover.mjs https://<preview>    # the C.3 rehearsal host
  *
  * Gates:
- *   1. / = the selector, umbrella-themed (#17cfc8), valid ItemList JSON-LD.
+ *   1. / = the selector, umbrella-themed (#17cfc8), valid ItemList JSON-LD, and
+ *      the coming-soon card present but non-navigable — announced, never claimed
+ *      in structured data or the sitemap, and /<slug> still a 404.
  *   2. Every legacy 2XKO apex URL shape 30x → target → 200: /champions/ekko,
  *      a real /players/<id> (sampled from the game sitemap), /stats,
  *      /?fuse=juggernaut (filters!), /?v=<id> (modal opens).
@@ -52,6 +54,15 @@ const GAMES = [
     charPath: '/sf6/characters/ryu',
   },
 ];
+
+/**
+ * The coming-soon card. Deliberately NOT in GAMES: that array drives the
+ * summary.json, rewrite, theme and canonical loops, none of which exist for a
+ * game with no deployment. Mirrors UPCOMING in lib/games.ts, whose type has no
+ * url/sitemapUrl/summaryUrl at all — which is what keeps it out of the ItemList
+ * and the sitemap index. Used only by the selector checks.
+ */
+const UPCOMING = { slug: 'tokon', name: 'MARVEL Tōkon' };
 
 /** Web Analytics proxy prefix per game — each is one rewrite in this repo's
  *  vercel.json AND one `observability.insights` in that game's app.config.ts.
@@ -113,6 +124,36 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
   ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
+  // Presence above, EXHAUSTIVENESS here. An announced-but-unshipped game has no
+  // sitemap to list — a <loc> for one would be a promise to crawlers that the
+  // platform cannot keep.
+  const idxLocs = [...index.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  const idxGames = idxLocs.filter((l) => l.endsWith('/sitemap.xml'));
+  check(
+    `  index lists EXACTLY ${GAMES.length} game sitemaps (${idxGames.length})`,
+    idxGames.length === GAMES.length,
+    idxGames.join(', '),
+  );
+  check(
+    `  no coming-soon game in the sitemap index`,
+    !new RegExp(UPCOMING.slug, 'i').test(index),
+    idxLocs.join(', '),
+  );
+
+  // There is no deployment, no vercel.json rewrite and nothing linking there.
+  const soonRes = await fetch(`${HOST}/${UPCOMING.slug}`, { redirect: 'manual' });
+  check(
+    `/${UPCOMING.slug} does not resolve (${soonRes.status}) — announced, not routed`,
+    soonRes.status === 404,
+  );
+
+  // Straight off the wire: the announcement needs neither hover nor JavaScript.
+  const servedHome = await (await fetch(`${HOST}/`)).text();
+  check(`"Coming Soon" is in the SERVED html`, servedHome.includes('Coming Soon'));
+  check(
+    `served html has no /${UPCOMING.slug} link`,
+    !new RegExp(`href="[^"]*/${UPCOMING.slug}`).test(servedHome),
+  );
 
   for (const { slug } of GAMES) {
     const res = await fetch(`${HOST}/${slug}/sitemap.xml`);
@@ -213,6 +254,25 @@ try {
   const sel = await page.evaluate(() => ({
     primary: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(),
     cards: [...document.querySelectorAll('a.game-card')].map((a) => a.getAttribute('href')),
+    // Class-only as well as anchor-scoped: if the upcoming card ever adopts
+    // .game-card it inherits the hover-lift and starts looking clickable.
+    gameCardClass: document.querySelectorAll('.game-card').length,
+    upcoming: (() => {
+      const el = document.querySelector('.upcoming-card');
+      if (!el) return null;
+      const badge = el.querySelector('.badge');
+      return {
+        tag: el.tagName,
+        href: el.getAttribute('href'),
+        insideAnchor: el.closest('a') !== null,
+        anchorsInside: el.querySelectorAll('a[href]').length,
+        tabindex: el.getAttribute('tabindex'),
+        badge: badge?.textContent.trim() ?? null,
+        badgeVisible: !!badge && getComputedStyle(badge).opacity === '1',
+        name: el.querySelector('.font-display')?.textContent.trim() ?? null,
+        artLoaded: el.querySelector('img')?.naturalWidth > 0,
+      };
+    })(),
     itemList: (() => {
       try {
         const nodes = [...document.querySelectorAll('script[type="application/ld+json"]')].map(
@@ -229,7 +289,26 @@ try {
     `cards link /2xko + /tekken + /sf6`,
     sel.cards.includes('/2xko') && sel.cards.includes('/tekken') && sel.cards.includes('/sf6'),
   );
+  check(
+    `3 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
+    sel.cards.length === 3 && sel.gameCardClass === 3,
+    JSON.stringify(sel.cards),
+  );
   check(`ItemList JSON-LD parses with 3 games`, sel.itemList === 3);
+  check(
+    `1 non-navigable upcoming card: no href, not inside an <a>, no focus stop, badge visible without hover`,
+    !!sel.upcoming &&
+      sel.upcoming.tag !== 'A' &&
+      sel.upcoming.href === null &&
+      sel.upcoming.insideAnchor === false &&
+      sel.upcoming.anchorsInside === 0 &&
+      sel.upcoming.tabindex === null &&
+      sel.upcoming.badge === 'Coming Soon' &&
+      sel.upcoming.badgeVisible === true &&
+      sel.upcoming.name === UPCOMING.name &&
+      sel.upcoming.artLoaded,
+    JSON.stringify(sel.upcoming),
+  );
 
   // ── selector counts + aggregate (Phase 6) ──
   // The counts arrive client-side, so they are read from the LIVE page rather
@@ -452,11 +531,7 @@ try {
     // THE REGRESSION ITSELF: a 16-hex baked path means the explicit endpoints
     // stopped beating VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG.
     const baked = observability.filter((o) => /^\/[0-9a-f]{16}\//.test(o.p));
-    check(
-      `no baked per-project hash path`,
-      baked.length === 0,
-      baked.map((b) => b.p).join(', '),
-    );
+    check(`no baked per-project hash path`, baked.length === 0, baked.map((b) => b.p).join(', '));
 
     const home = await page.evaluate(() => ({
       primary: getComputedStyle(document.documentElement)

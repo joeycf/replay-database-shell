@@ -106,6 +106,68 @@
             </span>
           </span>
         </a>
+
+        <!-- Announced, not yet in the archive. Reads `upcoming`, whose type has
+             no url/sitemapUrl/summaryUrl, so it cannot reach the ItemList
+             JSON-LD or the sitemap index (lib/games.ts explains the split).
+             NOT a link and NOT focusable: there is nothing to navigate to, and a
+             focus stop that does nothing is a keyboard/screen-reader dead end.
+             The affordance is therefore the PERSISTENT badge — always rendered,
+             always in the accessibility tree — not a hover reveal, which would
+             leave the card looking simply broken on touch. -->
+        <article
+          v-for="u in upcoming"
+          :key="u.id"
+          class="upcoming-card flex flex-col overflow-hidden border bg-surface shadow-card cut-lg"
+          :style="{ '--accent': u.accent }"
+        >
+          <span
+            class="accent-bar h-1 w-full flex-none"
+            aria-hidden="true"
+          />
+
+          <span class="relative block aspect-[1200/630] overflow-hidden bg-surface-sunken">
+            <img
+              :src="u.art"
+              alt="MARVEL Tōkon: Fighting Souls — coming soon to Replay Database"
+              width="1200"
+              height="630"
+              loading="eager"
+              class="art-upcoming h-full w-full object-cover"
+            />
+            <!-- Desaturation + veil mark the card unavailable rather than merely
+                 different; both lift on hover. The badge never dims. -->
+            <span
+              class="veil absolute inset-0"
+              aria-hidden="true"
+            />
+            <span
+              class="badge absolute left-4 top-4 border bg-surface-sunken/90 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-label cut-sm"
+              :style="{ color: u.accent, borderColor: u.accent }"
+            >
+              Coming Soon
+            </span>
+          </span>
+
+          <span class="flex flex-1 items-end justify-between gap-4 p-5 md:p-6">
+            <span class="flex min-w-0 flex-col">
+              <span class="font-display text-title font-bold text-text">{{ u.name }}</span>
+              <span class="mt-1 truncate font-mono text-[11px] text-text-muted">{{
+                u.tagline
+              }}</span>
+              <!-- Matches the live cards' reserved count line so this card's
+                   height stays theirs. NOT class="count" — that's a gate hook
+                   and the gates count non-empty ones. -->
+              <span
+                class="count-slot mt-3 block"
+                aria-hidden="true"
+              />
+            </span>
+            <!-- No CTA counterpart to the live cards' "Browse →": there is
+                 nothing to do here, the badge already says so, and the text
+                 would eat the title column at the sm 2-up width. -->
+          </span>
+        </article>
       </section>
     </main>
 
@@ -127,6 +189,10 @@
 definePageMeta({ layout: false });
 
 const games = useAppConfig().games;
+/** Announced, not yet in the archive — the card grid is its ONLY consumer. It is
+ *  deliberately absent from `resolvedCounts`, the aggregate line and the ItemList
+ *  JSON-LD below: none of those may count a game with no replays. */
+const upcoming = useAppConfig().upcoming;
 const site = useSiteOrigin();
 
 /**
@@ -283,5 +349,42 @@ useJsonLd([
 .game-card:hover .art-video,
 .game-card:focus-within .art-video {
   opacity: 1;
+}
+
+/* ── the upcoming card ──────────────────────────────────────────────────────
+   Structurally a game card, minus everything that implies you can click it: no
+   hover lift, no accent border, no ring, and cursor: default. The art is
+   desaturated and veiled so the card reads "not yet" rather than "broken"; hover
+   lifts both toward normal for pointer users, on top of the badge that is always
+   there. Motion is opacity/filter only, which the engine's global
+   prefers-reduced-motion reset already neutralizes. */
+.upcoming-card {
+  border-color: var(--color-border-subtle);
+  cursor: default;
+}
+.art-upcoming {
+  filter: saturate(0.62) brightness(0.84);
+  transition: filter 0.3s var(--ease-snap);
+}
+.upcoming-card:hover .art-upcoming {
+  filter: saturate(1) brightness(1);
+}
+.veil {
+  background: var(--color-bg);
+  opacity: 0.22;
+  transition: opacity 0.3s var(--ease-snap);
+}
+.upcoming-card:hover .veil {
+  opacity: 0;
+}
+/* The badge is the non-hover affordance, so it never dims with the art. */
+.badge {
+  backdrop-filter: blur(2px);
+}
+/* Mirrors .count exactly — the reserved line is what keeps this card the same
+   height as its neighbour in the grid row. */
+.count-slot {
+  min-height: 1.25rem;
+  line-height: 1.25rem;
 }
 </style>

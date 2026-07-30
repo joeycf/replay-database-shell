@@ -1,5 +1,5 @@
 import type { GameConfig } from '@engine/types';
-import { GAMES } from '../lib/games';
+import { GAMES, UPCOMING } from '../lib/games';
 
 /**
  * The shell's app config, merged OVER the engine's neutral default (PLAN §4a).
@@ -13,6 +13,10 @@ import { GAMES } from '../lib/games';
  * `games` is the shell-only selector list (PLAN §5 prompt A.2): the cards, the
  * ItemList JSON-LD, and the sitemap index all read it. It's the same GAMES data
  * the build-time sitemap-index module imports, so page and sitemap can't drift.
+ *
+ * `upcoming` is announced-but-not-yet-in-the-archive games, and feeds the CARDS
+ * ONLY — its type has no url/sitemapUrl/summaryUrl, so the JSON-LD and the
+ * sitemap index can't see it (lib/games.ts explains why the split exists).
  */
 export default defineAppConfig({
   game: {
@@ -30,4 +34,5 @@ export default defineAppConfig({
   } satisfies GameConfig,
 
   games: GAMES,
+  upcoming: UPCOMING,
 });

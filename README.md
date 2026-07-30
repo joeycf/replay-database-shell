@@ -96,6 +96,7 @@ and there is no `NUXT_APP_BASE_URL` dance here — that's a game-app concern.
 | `npm run verify:shell`                           | Headless gates on the **built** output — selector, theme, JSON-LD, `/health`, 404 |
 | `npm run verify:cutover <host>`                  | The post-cutover battery against a **live** host (defaults to replaydatabase.com) |
 | `node scripts/simulate-topology.mjs`             | Serve the built shell behind a faithful local implementation of `vercel.json`     |
+| `node scripts/card-art-tokon.mjs`                | One-off: regenerate the Tōkon coming-soon card art. Not wired into the build      |
 
 ## Verification
 
@@ -186,6 +187,35 @@ checking that limit first.
 5. `npm run generate && npm run verify:shell`, then
    `node scripts/simulate-topology.mjs` to exercise the routing before deploying.
 
+## Adding an upcoming game (a "Coming Soon" card)
+
+A game that has been announced but has no replays yet goes in **`UPCOMING`**, not
+`GAMES`:
+
+1. Add the entry to `UPCOMING` in `lib/games.ts`: `id`, `name`, `shortName`,
+   `slug`, `accent`, `art`, `tagline`. That type has **no** `url`, `sitemapUrl`
+   or `summaryUrl` — the fields don't exist, so the entry cannot reach the
+   `ItemList` JSON-LD or the sitemap index even by accident. The card grid is its
+   only consumer.
+2. Drop 1200×630 key art at `public/img/games/<slug>.png`. No hover video — the
+   card is not interactive.
+3. **Nothing else.** No `vercel.json` rewrite (there is no deployment to proxy
+   to), no insights rewrite, no summary, no video.
+4. The tagline describes the game and **never carries a release date**. This repo
+   redeploys only when the shell changes, so a date baked into static HTML goes
+   stale unattended while "Coming Soon" stays true.
+5. `npm run generate && npm run verify:shell` — the gates assert the ItemList
+   still has exactly 3 entries, the sitemap index exactly 3 game children, and
+   that the card has no `href` and is not inside an `<a>`.
+
+Art for a game with no repo is generated in-repo: `node scripts/card-art-tokon.mjs`
+is the one-off that produced `tokon.png` and is the only record of how. Deliberately
+not wired into the build — `npm run generate` must not need Chrome.
+
+**Promotion at launch is a move, not a copy:** when the pipeline ships, the entry
+leaves `UPCOMING`, joins `GAMES` (appending), gains the three URL fields, and
+takes the `vercel.json` rewrite pair per the section above.
+
 ## Standing rules (never undo)
 
 - **The redirect map is permanent infrastructure.** Those legacy 2XKO URLs were
@@ -193,6 +223,11 @@ checking that limit first.
 - **Never add host-based redirects on the game projects.** The rewrites proxy to
   `*.vercel.app` hosts, so a vercel.app → apex redirect there is a loop. Those
   aliases stay reachable and harmless; canonicals consolidate to the apex.
+- **A coming-soon game never enters `GAMES`.** `UPCOMING`'s type has no
+  `url`/`sitemapUrl`/`summaryUrl` on purpose: `GAMES` feeds three surfaces and
+  only the cards may show a game with no replays — announcing one in structured
+  data or a sitemap is a lie to crawlers, and two of the three consumers fail
+  silently. Don't collapse the two arrays behind a `status` flag.
 - **`crawlLinks: false` in `nuxt.config.ts` is load-bearing.** Vercel's
   `vercel.json` rewrites are _fallbacks_ — applied only when no static file
   matches. The selector links to `/2xko` and `/tekken`, which are edge rewrites,
