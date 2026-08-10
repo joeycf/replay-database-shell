@@ -14,12 +14,14 @@ export default defineNuxtConfig({
   // Never track a branch — bump the pin deliberately. `install: true` is
   // REQUIRED for git layers: without it the cloned layer gets no node_modules
   // and its runtime deps (@tailwindcss/vite, ufo, …) don't resolve (STACK §5.5).
-  // v0.6.1 is the platform-wide engine tag (all three games pin it too). The
+  // v0.6.4 is the platform-wide engine tag (all three games pin it too). The
   // shell skipped v0.5.5–v0.6.0 deliberately: those are game-facing (grouped
-  // patch facet, source groups) and inert on a three-route selector, and v0.6.1
-  // is behaviour-only (shared fetch options). Kept in step so the whole
+  // patch facet, source groups) and inert on a three-route selector. Everything
+  // since has been behaviour-only or asset-only — v0.6.4 adds maskable icons,
+  // which the shell inherits from the engine's public/ like every other icon,
+  // and a stats tile the shell has no page for. Kept in step so the whole
   // platform sits on one tag.
-  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.6.3', { install: true }]],
+  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.6.4', { install: true }]],
 
   compatibilityDate: '2025-07-01',
 
