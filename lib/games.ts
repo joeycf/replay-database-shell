@@ -110,8 +110,7 @@ export const GAMES: ShellGame[] = [
     // card follows the game, not the other way round.
     accent: '#03a5fe',
     art: '/img/games/tokon.png',
-    // No `video`: this game ships no hover loop. index.vue's `v-if="g.video"`
-    // and the optional field both tolerate its absence.
+    video: '/video/games/tokon.mp4',
     tagline: '4v4 tag-team · Marvel × Arc System Works',
     sitemapUrl: `${SITE_URL}/tokon/sitemap.xml`,
     summaryUrl: '/tokon/data/summary.json',
