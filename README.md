@@ -186,6 +186,13 @@ checking that limit first.
    proxied build will resolve its assets against the wrong base.
 5. `npm run generate && npm run verify:shell`, then
    `node scripts/simulate-topology.mjs` to exercise the routing before deploying.
+6. Add `<slug>-replay-database` to `GAMES` in `../fetch-and-pull.sh` and to
+   `APPS` in `../commit-and-push.sh`. Miss this and the clone falls behind its
+   own daily `data: refresh` commits and never gets pushed —
+   `commit-and-push.sh`'s `drift_check` warns about it, but only once you run
+   the script. If the app's `npm run typecheck` ends in a repo-local data
+   validator (`scripts/patches.ts --check` and friends), give it a `GATE_CMD`
+   entry there too, so a failed validator isn't read as a bad engine pin.
 
 ## Adding an upcoming game (a "Coming Soon" card)
 
