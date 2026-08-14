@@ -53,20 +53,29 @@ const GAMES = [
     primary: '#ff7d00',
     charPath: '/sf6/characters/ryu',
   },
+  {
+    slug: 'tokon',
+    id: 'tokon',
+    // The FULL title: this is compared against summary.json's `name`, which the
+    // game emits in full. The selector card uses the short 'MARVEL Tōkon'.
+    name: 'MARVEL Tōkon: Fighting Souls',
+    primary: '#03a5fe',
+    // NOT /characters/. This game sets characterRouteSegment: 'fighters', and
+    // the sitemap-sampling fallback below hardcodes /<slug>/characters/ — so a
+    // null charPath here would silently never find a character page.
+    charPath: '/tokon/fighters/captain-america',
+  },
 ];
 
-/**
- * The coming-soon card. Deliberately NOT in GAMES: that array drives the
- * summary.json, rewrite, theme and canonical loops, none of which exist for a
- * game with no deployment. Mirrors UPCOMING in lib/games.ts, whose type has no
- * url/sitemapUrl/summaryUrl at all — which is what keeps it out of the ItemList
- * and the sitemap index. Used only by the selector checks.
- */
-const UPCOMING = { slug: 'tokon', name: 'MARVEL Tōkon' };
+// UPCOMING is empty in lib/games.ts since MARVEL Tōkon shipped on 2026-08-14,
+// so there is no coming-soon card to assert against here. When a game is next
+// announced, restore the const and its selector gates: the card must render and
+// be non-navigable, /<slug> must 404, and the slug must appear in neither the
+// ItemList nor the sitemap index.
 
 /** Web Analytics proxy prefix per game — each is one rewrite in this repo's
  *  vercel.json AND one `observability.insights` in that game's app.config.ts.
- *  Restated here so gate 6 fails loudly if any of the three drifts. */
+ *  Restated here so gate 6 fails loudly if any of the four drifts. */
 const INSIGHTS_PREFIX = (slug) => `/${slug}-insights`;
 /** Speed Insights is single-project on Hobby: every game reports to whichever
  *  project owns the apex path, so this one is NOT per-game. */
@@ -121,6 +130,7 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     '/2xko/sitemap.xml',
     '/tekken/sitemap.xml',
     '/sf6/sitemap.xml',
+    '/tokon/sitemap.xml',
   ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
@@ -134,27 +144,6 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     idxGames.length === GAMES.length,
     idxGames.join(', '),
   );
-  check(
-    `  no coming-soon game in the sitemap index`,
-    !new RegExp(UPCOMING.slug, 'i').test(index),
-    idxLocs.join(', '),
-  );
-
-  // There is no deployment, no vercel.json rewrite and nothing linking there.
-  const soonRes = await fetch(`${HOST}/${UPCOMING.slug}`, { redirect: 'manual' });
-  check(
-    `/${UPCOMING.slug} does not resolve (${soonRes.status}) — announced, not routed`,
-    soonRes.status === 404,
-  );
-
-  // Straight off the wire: the announcement needs neither hover nor JavaScript.
-  const servedHome = await (await fetch(`${HOST}/`)).text();
-  check(`"Coming Soon" is in the SERVED html`, servedHome.includes('Coming Soon'));
-  check(
-    `served html has no /${UPCOMING.slug} link`,
-    !new RegExp(`href="[^"]*/${UPCOMING.slug}`).test(servedHome),
-  );
-
   for (const { slug } of GAMES) {
     const res = await fetch(`${HOST}/${slug}/sitemap.xml`);
     const ok = res.status === 200;
@@ -257,22 +246,7 @@ try {
     // Class-only as well as anchor-scoped: if the upcoming card ever adopts
     // .game-card it inherits the hover-lift and starts looking clickable.
     gameCardClass: document.querySelectorAll('.game-card').length,
-    upcoming: (() => {
-      const el = document.querySelector('.upcoming-card');
-      if (!el) return null;
-      const badge = el.querySelector('.badge');
-      return {
-        tag: el.tagName,
-        href: el.getAttribute('href'),
-        insideAnchor: el.closest('a') !== null,
-        anchorsInside: el.querySelectorAll('a[href]').length,
-        tabindex: el.getAttribute('tabindex'),
-        badge: badge?.textContent.trim() ?? null,
-        badgeVisible: !!badge && getComputedStyle(badge).opacity === '1',
-        name: el.querySelector('.font-display')?.textContent.trim() ?? null,
-        artLoaded: el.querySelector('img')?.naturalWidth > 0,
-      };
-    })(),
+    upcomingCount: document.querySelectorAll('.upcoming-card').length,
     itemList: (() => {
       try {
         const nodes = [...document.querySelectorAll('script[type="application/ld+json"]')].map(
@@ -286,29 +260,22 @@ try {
   }));
   check(`selector wears the umbrella teal (${sel.primary})`, sel.primary === '#17cfc8');
   check(
-    `cards link /2xko + /tekken + /sf6`,
-    sel.cards.includes('/2xko') && sel.cards.includes('/tekken') && sel.cards.includes('/sf6'),
+    `cards link /2xko + /tekken + /sf6 + /tokon`,
+    sel.cards.includes('/2xko') &&
+      sel.cards.includes('/tekken') &&
+      sel.cards.includes('/sf6') &&
+      sel.cards.includes('/tokon'),
   );
   check(
-    `3 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
-    sel.cards.length === 3 && sel.gameCardClass === 3,
+    `4 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
+    sel.cards.length === 4 && sel.gameCardClass === 4,
     JSON.stringify(sel.cards),
   );
-  check(`ItemList JSON-LD parses with 3 games`, sel.itemList === 3);
-  check(
-    `1 non-navigable upcoming card: no href, not inside an <a>, no focus stop, badge visible without hover`,
-    !!sel.upcoming &&
-      sel.upcoming.tag !== 'A' &&
-      sel.upcoming.href === null &&
-      sel.upcoming.insideAnchor === false &&
-      sel.upcoming.anchorsInside === 0 &&
-      sel.upcoming.tabindex === null &&
-      sel.upcoming.badge === 'Coming Soon' &&
-      sel.upcoming.badgeVisible === true &&
-      sel.upcoming.name === UPCOMING.name &&
-      sel.upcoming.artLoaded,
-    JSON.stringify(sel.upcoming),
-  );
+  check(`ItemList JSON-LD parses with 4 games`, sel.itemList === 4);
+  // UPCOMING is empty since MARVEL Tōkon shipped; restore the non-navigable
+  // card gates (no href, not inside an <a>, no focus stop, badge visible
+  // without hover) when a game is next announced.
+  check(`no upcoming card on the apex (UPCOMING is empty)`, sel.upcomingCount === 0);
 
   // ── selector counts + aggregate (Phase 6) ──
   // The counts arrive client-side, so they are read from the LIVE page rather
@@ -370,7 +337,7 @@ try {
   const liveTotal = GAMES.reduce((sum, g) => sum + (summaries[g.slug]?.replays ?? 0), 0);
   check(
     `aggregate line totals the archive (${JSON.stringify(live.aggregate)} ≈ ${liveTotal})`,
-    within(num(live.aggregate), liveTotal) && live.aggregate.includes('replays across 3 games'),
+    within(num(live.aggregate), liveTotal) && live.aggregate.includes('replays across 4 games'),
   );
 
   // ── POSITIVE CONTROL: block summaries through the browser ──
@@ -439,7 +406,7 @@ try {
     0,
   );
   check(
-    `aggregate sums only the two that resolved (${JSON.stringify(partial.aggregate)} ≈ ${remaining}, < ${liveTotal})`,
+    `aggregate sums only the three that resolved (${JSON.stringify(partial.aggregate)} ≈ ${remaining}, < ${liveTotal})`,
     within(num(partial.aggregate), remaining) && num(partial.aggregate) < liveTotal,
   );
   check(
@@ -456,7 +423,7 @@ try {
   );
   check(
     `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
-    none.aggregate === '3 games in the archive',
+    none.aggregate === '4 games in the archive',
   );
   check(
     `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(live)})`,

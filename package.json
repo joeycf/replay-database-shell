@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "The Replay Database selector shell: the apex (replaydatabase.com) landing page that routes /2xko, /tekken and /sf6 to the game apps. A thin consumer of the replay-engine layer with NO theme.css — it wears the engine's neutral umbrella brand.",
+  "description": "The Replay Database selector shell: the apex (replaydatabase.com) landing page that routes /2xko, /tekken, /sf6 and /tokon to the game apps. A thin consumer of the replay-engine layer with NO theme.css — it wears the engine's neutral umbrella brand.",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",

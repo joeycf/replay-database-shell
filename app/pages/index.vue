@@ -275,7 +275,7 @@ const aggregate = computed(() =>
 useSiteMeta({
   title: 'Replay Database — Competitive Fighting-Game Replays',
   description:
-    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8 and Street Fighter 6 — character usage, matchups, pairings, and meta over time, all in one place.',
+    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6 and MARVEL Tōkon — character usage, matchups, pairings, and meta over time, all in one place.',
 });
 
 // ItemList JSON-LD enumerating the games (PLAN §5 A.6) — the apex's structured
@@ -321,8 +321,8 @@ useJsonLd([
   line-height: 1.25rem;
 }
 /* The hero pill swaps its text client-side too, and the upgraded string
-   ("39,189 replays across 3 games") wraps to two lines on narrow viewports
-   where the fallback ("3 games in the archive") does not — which pushed the
+   ("39,189 replays across 4 games") wraps to two lines on narrow viewports
+   where the fallback ("4 games in the archive") does not — which pushed the
    whole card grid down 18px the moment the counts landed (measured at 320 and
    360 px). Below sm, reserve both lines up front; from sm up neither string
    wraps, so the pill keeps its natural single-line height. The breakpoint is

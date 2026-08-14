@@ -144,7 +144,7 @@ else**.
 
 Both SDKs resolve their script and beacons against a **same-origin** prefix, so
 the project credited is whichever one owns that path on the domain being
-browsed. Every page under `/2xko`, `/tekken` and `/sf6` is served on the apex —
+browsed. Every page under `/2xko`, `/tekken`, `/sf6` and `/tokon` is served on the apex —
 so without help, all of their data would land here.
 
 `vercel.json` therefore carries one insights rewrite per game:
@@ -156,7 +156,7 @@ so without help, all of their data would land here.
 Each is paired 1:1 with `observability.insights: '/<slug>-insights'` in that
 game's `app.config.ts`. **The pair ships together or every beacon 404s** — and
 404s silently, which is exactly how the Phase-5 cutover lost ~10 days of
-analytics for all three games. `npm run verify:cutover` gates it.
+analytics for all four games. `npm run verify:cutover` gates it.
 
 Same-origin is not incidental: the child projects' `/_vercel/insights/*`
 endpoints send no `Access-Control-Allow-*` headers, so pointing a game straight
@@ -205,7 +205,7 @@ A game that has been announced but has no replays yet goes in **`UPCOMING`**, no
    redeploys only when the shell changes, so a date baked into static HTML goes
    stale unattended while "Coming Soon" stays true.
 5. `npm run generate && npm run verify:shell` — the gates assert the ItemList
-   still has exactly 3 entries, the sitemap index exactly 3 game children, and
+   still has exactly 4 entries, the sitemap index exactly 4 game children, and
    that the card has no `href` and is not inside an `<a>`.
 
 Art for a game with no repo is generated in-repo: `node scripts/card-art-tokon.mjs`

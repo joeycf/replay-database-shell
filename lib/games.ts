@@ -89,6 +89,33 @@ export const GAMES: ShellGame[] = [
     sitemapUrl: `${SITE_URL}/sf6/sitemap.xml`,
     summaryUrl: '/sf6/data/summary.json',
   },
+  {
+    // Promoted out of UPCOMING on 2026-08-14. Appended, per the note above.
+    id: 'tokon',
+    // The short form the game is actually called, parallel to 'Tekken 8' and
+    // '2XKO'. The full title "MARVEL Tōkon: Fighting Souls" wraps to two lines
+    // in the title column at the sm 2-up width and makes its grid row taller
+    // than the row above it (measured 271px vs 297px at 640), so it lives in
+    // the card art and the image alt instead.
+    // NOTE: verify-cutover.mjs must use the FULL title in its own table — it
+    // asserts against summary.json, which the game emits with the full name.
+    name: 'MARVEL Tōkon',
+    shortName: 'TŌKON',
+    slug: 'tokon',
+    url: '/tokon',
+    // The game's theme.css --color-primary, per the contract above. The
+    // coming-soon card carried #00a6ff, sampled from the Marvel CDN wordmark;
+    // the shipped skin resolved SOULS blue slightly differently, and it is the
+    // computed value that verify-cutover compares through the proxy — so the
+    // card follows the game, not the other way round.
+    accent: '#03a5fe',
+    art: '/img/games/tokon.png',
+    // No `video`: this game ships no hover loop. index.vue's `v-if="g.video"`
+    // and the optional field both tolerate its absence.
+    tagline: '4v4 tag-team · Marvel × Arc System Works',
+    sitemapUrl: `${SITE_URL}/tokon/sitemap.xml`,
+    summaryUrl: '/tokon/data/summary.json',
+  },
 ];
 
 /**
@@ -130,34 +157,9 @@ export interface UpcomingGame {
   tagline: string;
 }
 
-export const UPCOMING: UpcomingGame[] = [
-  {
-    id: 'tokon',
-    // MARVEL Tōkon: Fighting Souls — developed by Arc System Works, published by
-    // Sony Interactive Entertainment with Marvel Games and PlayStation Studios;
-    // PS5 + PC, 2026-08-06. Rights holder for the future game repo's GameConfig
-    // (nothing on the selector renders one — the shell's disclaimer is the
-    // umbrella 'the respective rights holders'): Marvel Games.
-    // The short form the game is actually called, parallel to the live cards'
-    // 'Tekken 8' / '2XKO'. The full official title is "MARVEL Tōkon: Fighting
-    // Souls" — it lives in the card art and the image alt. Spelled out here it
-    // wraps to two lines in the title column at the sm 2-up width and makes its
-    // grid row taller than the row above it (measured: 271px vs 297px at 640).
-    name: 'MARVEL Tōkon',
-    shortName: 'TŌKON',
-    slug: 'tokon',
-    // Both hexes are sampled from the official Marvel CDN wordmark, which sets
-    // "FIGHTING" on orange #ff6b03 and "SOULS" on blue #00a6ff — see
-    // scripts/card-art-tokon.mjs for the asset URL and the sampling method. The
-    // BLUE is the accent rather than the orange: SF6's accent is #ff7d00, and in
-    // the 2×2 grid these two cards sit side by side, where two oranges read as a
-    // pair. The card art carries both.
-    accent: '#00a6ff',
-    art: '/img/games/tokon.png',
-    // NO DATE, deliberately. The game ships 2026-08-06 but the database won't
-    // exist for weeks after that, so "launching August 6" goes wrong almost
-    // immediately while "Coming Soon" stays true. This repo has no expiry
-    // machinery; the only safe date is no date.
-    tagline: '4v4 tag-team · Marvel × Arc System Works',
-  },
-];
+export const UPCOMING: UpcomingGame[] = [];
+
+// Emptied 2026-08-14 when MARVEL Tōkon shipped and moved into GAMES above.
+// The type and the doc block are kept deliberately: the narrow shape is what
+// makes it impossible for an announced game to reach the sitemap or the
+// JSON-LD by accident, and the next announcement should inherit that.

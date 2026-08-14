@@ -82,6 +82,14 @@ const SUMMARIES = {
     characters: 30,
     updated: '2026-07-26',
   },
+  tokon: {
+    game: 'tokon',
+    name: 'MARVEL Tōkon: Fighting Souls',
+    replays: 4000000,
+    players: 400,
+    characters: 21,
+    updated: '2026-07-26',
+  },
 };
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
@@ -198,10 +206,11 @@ try {
       artLoaded: a.querySelector('img')?.naturalWidth > 0,
     })),
   );
-  check(`3 game cards render`, cards.length === 3, JSON.stringify(cards));
+  check(`4 game cards render`, cards.length === 4, JSON.stringify(cards));
   const two = cards.find((c) => c.href === '/2xko');
   const tek = cards.find((c) => c.href === '/tekken');
   const sf6 = cards.find((c) => c.href === '/sf6');
+  const tok = cards.find((c) => c.href === '/tokon');
   check(
     `2XKO card: href=/2xko, accent #ff2e88, art loads`,
     !!two && two.accent === '#ff2e88' && two.name === '2XKO' && two.artLoaded,
@@ -214,16 +223,20 @@ try {
     `SF6 card: href=/sf6, accent #ff7d00, art loads`,
     !!sf6 && sf6.accent === '#ff7d00' && sf6.name === 'Street Fighter 6' && sf6.artLoaded,
   );
+  check(
+    `Tōkon card: href=/tokon, accent #03a5fe, art loads`,
+    !!tok && tok.accent === '#03a5fe' && tok.name === 'MARVEL Tōkon' && tok.artLoaded,
+  );
 
-  // The card-count selector above is ANCHOR-scoped (`a.game-card`), so a
-  // non-anchor coming-soon card is invisible to it by construction. Assert the
-  // CLASS-only selector too: if someone later reuses .game-card on the upcoming
-  // card, it inherits the hover-lift and this fails HERE, loudly, instead of
-  // quietly shipping a card that looks clickable.
+  // The card-count selector above is ANCHOR-scoped (`a.game-card`). Assert the
+  // CLASS-only selector too: UPCOMING is empty today, but the next announced
+  // game gets a non-anchor card, and if someone reuses .game-card on it that
+  // card inherits the hover-lift. This fails HERE, loudly, instead of quietly
+  // shipping something that looks clickable and is not.
   const gameCardClass = await page.evaluate(() => document.querySelectorAll('.game-card').length);
   check(
-    `.game-card is the three LIVE cards and nothing else`,
-    gameCardClass === 3,
+    `.game-card is the four LIVE cards and nothing else`,
+    gameCardClass === 4,
     `${gameCardClass} found`,
   );
 
@@ -243,26 +256,19 @@ try {
   });
   const itemList = jsonLd.find((n) => n['@type'] === 'ItemList');
   check(
-    `ItemList JSON-LD parses with all three games at apex URLs`,
+    `ItemList JSON-LD parses with all four games at apex URLs`,
     !!itemList &&
-      itemList.itemListElement?.length === 3 &&
+      itemList.itemListElement?.length === 4 &&
       itemList.itemListElement[0].url === 'https://replaydatabase.com/2xko' &&
       itemList.itemListElement[1].url === 'https://replaydatabase.com/tekken' &&
-      itemList.itemListElement[2].url === 'https://replaydatabase.com/sf6',
+      itemList.itemListElement[2].url === 'https://replaydatabase.com/sf6' &&
+      itemList.itemListElement[3].url === 'https://replaydatabase.com/tokon',
     JSON.stringify(itemList),
   );
-  // THE load-bearing guard for coming-soon games. An upcoming game in structured
-  // data is a lie to search engines, so the ItemList must carry the three games
-  // that actually have replays and nothing else. lib/games.ts makes that
-  // structural (UPCOMING has no `url` field at all) — this proves it holds.
-  check(
-    `ItemList carries NO upcoming game`,
-    !!itemList &&
-      !JSON.stringify(itemList.itemListElement ?? [])
-        .toLowerCase()
-        .includes('tokon'),
-    JSON.stringify(itemList?.itemListElement),
-  );
+  // The structural guard against an upcoming game reaching structured data
+  // still holds — UPCOMING has no `url` field, so it cannot reach the ItemList
+  // even by mistake. There is nothing in UPCOMING to assert against today; the
+  // check returns with the next announced game.
 
   // ── 1a. the sitemap index, same guard ────────────────────────────────────
   // Read off disk rather than over the wire: the index is written by
@@ -271,87 +277,25 @@ try {
   const sitemapIndex = readFileSync(join(STATIC_DIR, 'sitemap.xml'), 'utf8');
   const sitemapChildren = [...sitemapIndex.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   check(
-    `sitemap index lists exactly 3 game children + the page sitemap (${sitemapChildren.length})`,
-    sitemapChildren.length === 4 &&
+    `sitemap index lists exactly 4 game children + the page sitemap (${sitemapChildren.length})`,
+    sitemapChildren.length === 5 &&
       sitemapChildren.includes('https://replaydatabase.com/sitemap-pages.xml') &&
-      ['2xko', 'tekken', 'sf6'].every((s) =>
+      ['2xko', 'tekken', 'sf6', 'tokon'].every((s) =>
         sitemapChildren.includes(`https://replaydatabase.com/${s}/sitemap.xml`),
       ),
     sitemapChildren.join(', '),
   );
-  check(
-    `sitemap index carries NO upcoming game`,
-    !sitemapIndex.toLowerCase().includes('tokon'),
-    sitemapChildren.join(', '),
-  );
 
-  // ── 1a2. the upcoming card: visible, announced, and NOT navigable ────────
-  // No hover simulation anywhere in this block — that is the point. There is no
-  // hover on touch, so a hover-only "Coming Soon" reveal would leave the card
-  // looking broken on a phone.
-  const up = await page.evaluate(() => {
-    const els = [...document.querySelectorAll('.upcoming-card')];
-    return els.map((el) => {
-      const badge = el.querySelector('.badge');
-      const rect = badge?.getBoundingClientRect();
-      const cs = badge ? getComputedStyle(badge) : null;
-      const img = el.querySelector('img');
-      return {
-        tag: el.tagName,
-        text: el.textContent.replace(/\s+/g, ' ').trim(),
-        hasHref: el.hasAttribute('href'),
-        insideAnchor: el.closest('a') !== null,
-        anchorsWithin: el.querySelectorAll('a[href]').length,
-        focusable: el.hasAttribute('tabindex'),
-        accent: cs && getComputedStyle(el).getPropertyValue('--accent').trim(),
-        badgeText: badge?.textContent.trim() ?? null,
-        badgeVisible: !!cs && cs.opacity !== '0' && cs.visibility !== 'hidden' && rect.width > 0,
-        artWidth: img?.naturalWidth ?? 0,
-      };
-    });
-  });
-  check(`1 upcoming card renders`, up.length === 1, JSON.stringify(up));
-  const tokon = up[0];
-  check(
-    `upcoming card is not navigable (tag=${tokon?.tag}, href=${tokon?.hasHref}, inside <a>=${tokon?.insideAnchor}, anchors within=${tokon?.anchorsWithin})`,
-    !!tokon &&
-      tokon.tag !== 'A' &&
-      !tokon.hasHref &&
-      !tokon.insideAnchor &&
-      tokon.anchorsWithin === 0,
-  );
-  check(`upcoming card is not in the tab order (no tabindex)`, !!tokon && !tokon.focusable);
-  check(
-    `"Coming Soon" badge is in the DOM and visible WITHOUT hover (${JSON.stringify(tokon?.badgeText)})`,
-    !!tokon && tokon.badgeText === 'Coming Soon' && tokon.badgeVisible,
-    JSON.stringify(tokon),
-  );
-  check(
-    `upcoming card: accent #00a6ff, art loads at 1200px (${tokon?.accent}, ${tokon?.artWidth})`,
-    !!tokon && tokon.accent === '#00a6ff' && tokon.artWidth === 1200,
-  );
-  check(
-    `upcoming card carries no date (a date in the card would go stale on its own)`,
-    // Whole words only — an unanchored month prefix matches "MARvel".
-    !!tokon &&
-      !/\b(20\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b\s+\d/i.test(tokon.text) &&
-      !/\b20\d\d\b/.test(tokon.text),
-    tokon?.text,
-  );
-
-  // The checks above read the hydrated DOM. The SERVED html is the stronger
-  // proof: it shows the announcement needs neither hover nor JavaScript, and
-  // that nothing on the page links at the slug the game will one day own.
-  const servedHtml = readFileSync(join(STATIC_DIR, 'index.html'), 'utf8');
-  check(
-    `"Coming Soon" is in the PRERENDERED html (no JS needed)`,
-    servedHtml.includes('Coming Soon'),
-  );
-  check(
-    `prerendered html has no /tokon link`,
-    !/href="[^"]*\/tokon/.test(servedHtml),
-    servedHtml.match(/href="[^"]*tokon[^"]*"/g)?.join(', '),
-  );
+  // ── 1a2. the coming-soon card ────────────────────────────────────────────
+  // UPCOMING is empty since MARVEL Tōkon shipped on 2026-08-14, so there is no
+  // upcoming card to assert against and the whole block is inert rather than
+  // deleted-and-forgotten. What it used to prove, for whoever announces the
+  // next game: the card renders, shows its badge WITHOUT hover (there is no
+  // hover on touch, so a hover-only reveal looks broken on a phone), is not an
+  // <a>, is not focusable, carries no date, and never appears in the ItemList
+  // or the sitemap. Restore these when UPCOMING is non-empty again.
+  const up = await page.evaluate(() => [...document.querySelectorAll('.upcoming-card')].length);
+  check(`no upcoming card renders (UPCOMING is empty)`, up === 0, `${up} found`);
 
   // ── 1b. per-card counts + the aggregate line (Phase 6) ───────────────────
   console.log('\n[/] counts');
@@ -393,7 +337,7 @@ try {
       ),
     }));
 
-  await waitForCounts(3).catch(() => {});
+  await waitForCounts(4).catch(() => {});
   const all = await readSelector();
   for (const [slug, s] of Object.entries(SUMMARIES)) {
     const href = `/${slug}`;
@@ -404,8 +348,8 @@ try {
   }
   const allTotal = Object.values(SUMMARIES).reduce((sum, s) => sum + s.replays, 0);
   check(
-    `aggregate sums all three (${JSON.stringify(all.aggregate)})`,
-    all.aggregate === `${fmt(allTotal)} replays across 3 games`,
+    `aggregate sums all four (${JSON.stringify(all.aggregate)})`,
+    all.aggregate === `${fmt(allTotal)} replays across 4 games`,
   );
 
   await page.screenshot({
@@ -441,7 +385,7 @@ try {
   servedSlugs.delete(BLOCKED);
   currentPage = '/ (summary blocked)';
   await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-  await waitForCounts(2).catch(() => {});
+  await waitForCounts(3).catch(() => {});
   const partial = await readSelector();
 
   check(
@@ -450,8 +394,8 @@ try {
   );
   const partialTotal = allTotal - SUMMARIES[BLOCKED].replays;
   check(
-    `aggregate sums only the two that resolved (${JSON.stringify(partial.aggregate)})`,
-    partial.aggregate === `${fmt(partialTotal)} replays across 3 games`,
+    `aggregate sums only the three that resolved (${JSON.stringify(partial.aggregate)})`,
+    partial.aggregate === `${fmt(partialTotal)} replays across 4 games`,
   );
   for (const slug of Object.keys(SUMMARIES).filter((s) => s !== BLOCKED)) {
     check(
@@ -486,7 +430,7 @@ try {
   );
   check(
     `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
-    none.aggregate === '3 games in the archive',
+    none.aggregate === '4 games in the archive',
   );
   check(
     `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(all)})`,
@@ -510,7 +454,7 @@ try {
       currentPage = served ? '/' : '/ (summary blocked)';
       await page.setViewport({ width, height: 900 });
       await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-      if (served) await waitForCounts(3).catch(() => {});
+      if (served) await waitForCounts(4).catch(() => {});
       else await page.waitForNetworkIdle({ idleTime: 500, timeout: 10000 }).catch(() => {});
       states.push(await readSelector());
     }
@@ -536,7 +480,7 @@ try {
     await page.setViewport({ width, height: 1400 });
     currentPage = `/ (${width}px)`;
     await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-    await waitForCounts(3).catch(() => {});
+    await waitForCounts(4).catch(() => {});
     const grid = await page.evaluate(() => {
       const sec = document.querySelector('section[aria-label="Games"]');
       const kids = [...sec.children];

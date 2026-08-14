@@ -166,6 +166,10 @@
       "destination": "https://sf6-replay-database.vercel.app/_vercel/insights/:path*"
     },
     {
+      "source": "/tokon-insights/:path*",
+      "destination": "https://tokon-replay-database.vercel.app/_vercel/insights/:path*"
+    },
+    {
       "source": "/2xko",
       "destination": "https://2xko-replay-database.vercel.app/2xko"
     },
@@ -188,6 +192,14 @@
     {
       "source": "/sf6/:path*",
       "destination": "https://sf6-replay-database.vercel.app/sf6/:path*"
+    },
+    {
+      "source": "/tokon",
+      "destination": "https://tokon-replay-database.vercel.app/tokon"
+    },
+    {
+      "source": "/tokon/:path*",
+      "destination": "https://tokon-replay-database.vercel.app/tokon/:path*"
     }
   ]
 }
