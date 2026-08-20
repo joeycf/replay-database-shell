@@ -19,7 +19,9 @@
  * SILENCE IS FINE. A month with two entries is a month with two entries.
  *
  * HOW AN ENTRY IS WRITTEN. One to four sentences. The first says what changed.
- * EVERY SENTENCE AFTER THE FIRST MUST BE CONCRETE — a frozen number, what it
+ * NO EM DASHES in a title or body: use a comma, a colon, a full stop or
+ * parentheses, so the page reads like a person wrote it rather than a model.
+ * EVERY SENTENCE AFTER THE FIRST MUST BE CONCRETE. A frozen number, what it
  * means for a visitor, or the mechanism in plain words. Never padding, never a
  * restatement of the title, never a sentence that would survive being deleted.
  *
@@ -85,7 +87,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tokon',
     kind: 'data',
     title: 'Tōkon teams, all four fighters',
-    body: "Most Tōkon sides now show the full four-fighter team. Where the video title named only one or two, the rest were read off the match footage, and where the footage couldn't settle it they were read by hand from the broadcast. Sides that swapped a fighter mid-set are shown as both teams they played rather than flattened into one. A side that still isn't settled is shown as incomplete rather than filled in with a guess.",
+    body: "Most Tōkon sides now show the full four-fighter team. Where the video title named only one or two, the rest came from the match footage, and anything the footage couldn't settle was read by hand from the broadcast. A side that swapped a fighter mid-set shows both teams it played, not one flattened list. A side that still isn't settled shows as incomplete rather than filled in with a guess.",
   },
   {
     // shell 56c1b52; PLAN.md "PHASE 8 COMPLETE (2026-08-14)". Game mechanics
@@ -96,7 +98,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tokon',
     kind: 'launch',
     title: 'MARVEL Tōkon joins, eight days after release',
-    body: "The fourth game on the platform, live eight days after the game itself. Tōkon is 4v4 tag on a shared life bar, with 21 fighters across five themed teams — one of them a hidden unlock. It's the first game here where a side holds four characters, so browse cards, filters and pairing stats all count teams of four.",
+    body: "The fourth game on the platform, live eight days after the game itself. Tōkon is 4v4 tag on a shared life bar, with 21 fighters across five themed teams (one of them a hidden unlock). It's the first game here where a side holds four characters, so browse cards, filters and pairing stats all count teams of four.",
   },
   {
     // sf6 4247ae0 — "proposed dropping 196… wrong about 118… removes 54".
@@ -104,7 +106,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'sf6',
     kind: 'improvement',
     title: 'Duplicate matches removed from SF6',
-    body: 'Fifty-four matches that appeared twice are gone. A first scan proposed dropping 196, but checking each against the Master Rate shown on screen — rather than trusting run time — proved 118 of them were genuinely different matches that merely ran the same length. Only the 54 real duplicates were removed.',
+    body: 'Fifty-four matches that appeared twice are gone. A first scan proposed dropping 196. Checking each one against the Master Rate shown on screen, instead of trusting run time, proved 118 of those were genuinely different matches that happened to run the same length. Only the 54 real duplicates came out.',
   },
   {
     // 2xko 93387dc.
@@ -121,7 +123,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: '2xko',
     kind: 'data',
     title: 'Evo footage, including the Japanese broadcasts',
-    body: "2XKO's Evo matches now carry champions read from the footage itself, not from the video title. The Las Vegas broadcasts spell champion names in the Latin alphabet and Evo Japan renders them in katakana, so both are read — a Latin-only reader would have returned a clean-looking zero on half the records. Across all 21 sets it never invented a champion: anything it couldn't read was left for a person.",
+    body: "2XKO's Evo matches now carry champions read from the footage itself, not from the video title. The Las Vegas broadcasts spell champion names in the Latin alphabet; Evo Japan renders them in katakana. Both are read, because a Latin-only reader would have returned a clean-looking zero on half the records. Across all 21 sets it never invented a champion: anything it couldn't read was left for a person.",
   },
   {
     // 2xko 147b681; data/report.md frozen-channel table; the 24% share per
@@ -131,7 +133,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: '2xko',
     kind: 'data',
     title: '1,317 matches kept after a channel left',
-    body: '2XKO Pro Replays rebranded and unlisted its entire 2XKO back catalogue — a quarter of the archive at the time. Rather than let the next refresh quietly rebuild the database without them, those 1,317 matches stay in the archive — it keeps what channels take down. Some of those videos have since vanished entirely (in a spot check, 4 of 150 were already gone), which is exactly why the records, the players, and every stat built from them remain either way.',
+    body: '2XKO Pro Replays rebranded and unlisted its entire 2XKO back catalogue, a quarter of the archive at the time. Those 1,317 matches stay put: the archive keeps what channels take down, so the next refresh cannot quietly rebuild the database without them. Some of those videos have since vanished entirely (in a spot check, 4 of 150 were already gone), which is exactly why the records, the players, and every stat built from them survive either way.',
   },
   {
     // tekken b4db6ca — 63 sets, 63/63 both-sides-exact, 13/13 counter-picked
@@ -140,7 +142,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tekken',
     kind: 'data',
     title: 'Evo footage for Tekken 8',
-    body: "Sixty-three Evo sets join Tekken, with characters and sides read from the broadcast rather than the video title. That matters more here than anywhere else: on Tekken's Evo uploads the title names the two players in the wrong order 37.7% of the time, so who played what is taken from the on-screen HUD and never assumed. Every one of the 13 sets where a player counter-picked mid-set shows both characters they used.",
+    body: "Sixty-three Evo sets join Tekken, with characters and sides read from the broadcast rather than the video title. That matters more here than anywhere else: on Tekken's Evo uploads, the title names the two players in the wrong order 37.7% of the time. Who played what comes from the on-screen HUD, never from the title. All 13 sets where a player counter-picked mid-set show both characters they used.",
   },
   {
     // sf6 d544fe0 (81 sets / 8 events / 17 counter-picks), ce23976 (a side
@@ -149,7 +151,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'sf6',
     kind: 'data',
     title: 'Evo footage, and mid-set counter-picks',
-    body: 'Eighty-one Evo sets across eight events, 2023 to 2026, join SF6. The characters come from the footage: names are read off the in-game nameplates frame by frame, and the whole set was checked against hand-verified matches before any of it shipped. Seventeen of those sets record a player switching character mid-set, and a side now lists every character it played instead of only the first.',
+    body: 'Eighty-one Evo sets across eight events, 2023 to 2026, join SF6. The characters come from the footage: names read off the in-game nameplates frame by frame, then checked against hand-verified matches before any of it shipped. Seventeen of those sets record a player switching character mid-set. A side now lists every character it played, not only the first.',
   },
   {
     // sf6 fe5bb3f, clearing gates pre-declared in SF6's first commit 7a0e61b
@@ -158,7 +160,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'sf6',
     kind: 'data',
     title: 'Yasmine and Season 4, on day one',
-    body: "SF6's 31st character and the start of Season 4 were live the day Capcom shipped them, Yasmine with her own colour on every chart and filter. Both had been written into the season and patch tables in advance, with the date they were due, so nothing had to be backfilled after the update landed. Season 4's first patch joined the patch filter the same day.",
+    body: "SF6's 31st character and the start of Season 4 went live the day Capcom shipped them, Yasmine with her own colour on every chart and filter. Both were already written into the season and patch tables, with the date they were due, so nothing needed backfilling after the update landed. Season 4's first patch joined the patch filter the same day.",
   },
   {
     // sf6 34d5f25; PLAN.md:894 ("+3,128 replays") and the 1,022 recovered from
@@ -167,7 +169,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'sf6',
     kind: 'data',
     title: 'Capcom Pro Tour and tournament channels',
-    body: "Three tournament channels join SF6, including Capcom's own Pro Tour archive: 3,128 more matches. 1,022 of those had been sitting unread because Capcom's uploads don't put the game name in the title — reading the description instead recovered them. Tournament play can now be filtered apart from online ranked.",
+    body: "Three tournament channels join SF6, including Capcom's own Pro Tour archive: 3,128 more matches. 1,022 of those had been sitting unread because Capcom's uploads don't put the game name in the title. Reading the description instead recovered them. You can now filter tournament play apart from online ranked.",
   },
   {
     // shell 9c8a434 — the UPCOMING array, deliberately dateless.
@@ -175,7 +177,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'shell',
     kind: 'feature',
     title: 'MARVEL Tōkon, coming soon',
-    body: 'Tōkon appears on the front door as an announced game, with no date attached. The card is deliberately not a link and carries no replay count — there was nothing to browse yet, and saying so plainly beats a card that looks broken.',
+    body: 'Tōkon appears on the front door as an announced game, with no date attached. The card is deliberately not a link and carries no replay count. There was nothing to browse yet, and saying so plainly beats a card that looks broken.',
   },
   {
     // sf6 c70b048 — "17 patch children under the season parents".
@@ -191,7 +193,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'shell',
     kind: 'feature',
     title: 'Live match counts on the front door',
-    body: "Every game's card shows how many matches it holds, and the total across all of them sits under the logo. The numbers are read from each game's own published count as the page loads, so they move as the archives grow. A game that hasn't published one shows no number at all rather than a guess.",
+    body: "Every game's card shows how many matches it holds, and the total across all of them sits under the logo. Each number comes from that game's own published count as the page loads, so it moves as the archive grows. A game that hasn't published one shows no number at all rather than a guess.",
   },
   {
     // engine ecb04fd / v0.6.1. The measurement is STACK.md §14, taken on SF6 at
@@ -200,7 +202,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'engine',
     kind: 'improvement',
     title: 'Pages load a lot lighter',
-    body: 'Each data file is fetched once per page now, instead of once per component that wanted it. On the largest game that took a first load from 31 MB to 7 MB — the replay file alone had been downloading five times over.',
+    body: 'Each data file is fetched once per page now, instead of once per component that wanted it. On the largest game that took a first load from 31 MB to 7 MB. The replay file alone had been downloading five times over.',
   },
   {
     // sf6 7a0e61b + shell 5296f63; launch totals per PLAN.md:701.
@@ -234,7 +236,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: '2xko',
     kind: 'data',
     title: 'A third channel for 2XKO',
-    body: '2XKO Best Replays joins the archive, taking it past 5,000 matches. Its 2,304 videos included 80 that were already in the database from another channel; those were recognised and not counted twice. Fuse detection reached 5,104 of the 5,206 records in the enlarged catalogue.',
+    body: '2XKO Best Replays joins the archive, taking it past 5,000 matches. Its 2,304 videos included 80 already in the database from another channel, which were recognised and not counted twice. Fuse detection reached 5,104 of the 5,206 records in the enlarged catalogue.',
   },
   {
     // tekken 5554040 — 213 matches, May 2024 → June 2026; 16 sponsor-tag
@@ -243,7 +245,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tekken',
     kind: 'data',
     title: 'TEKKEN World Tour matches',
-    body: "Tekken's official World Tour channel joins as a tournament source, adding 213 matches from May 2024 onward. Sixteen players who had been appearing twice — once under a sponsor tag, once without — were merged, so each now has one page holding all their matches instead of two holding half each.",
+    body: "Tekken's official World Tour channel joins as a tournament source, adding 213 matches from May 2024 onward. Sixteen players had been appearing twice, once under a sponsor tag and once without. Merging them gives each player one page holding all their matches instead of two holding half each.",
   },
   {
     // engine 8f8613d / v0.5.3; first consumer tekken df2c33e. MetaTimeline
@@ -271,7 +273,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tekken',
     kind: 'launch',
     title: 'Tekken 8 joins',
-    body: "The platform's second game, live with 14,039 matches, 42 characters and 2,690 players across three seasons. Where the broadcast showed a player's ladder rank it was captured with the match — just under half of all sides at launch — so you can filter to the level of play you want to study.",
+    body: "The platform's second game, live with 14,039 matches, 42 characters and 2,690 players across three seasons. Where the broadcast showed a player's ladder rank, it was captured with the match: just under half of all sides at launch. So you can filter to the level of play you want to study.",
   },
   {
     // 2xko cbae465 + 074e5a7 — thirteen days before the shell existed.
@@ -288,7 +290,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: '2xko',
     kind: 'feature',
     title: 'Filter 2XKO by fuse',
-    body: "You can filter by fuse and see fuse usage across the archive, even though no video title ever mentions one. The fuse is read off the video frames themselves, with the nameplate used to tell which side it belongs to, and checked against hand-labelled matches — 98.75% correct on the configuration that shipped. Where it couldn't tell, the match says so instead of guessing.",
+    body: "You can filter by fuse and see fuse usage across the archive, even though no video title ever mentions one. The fuse is read off the video frames themselves, with the nameplate telling which side it belongs to. Checked against hand-labelled matches, the configuration that shipped came out 98.75% correct. Where it couldn't tell, the match says so instead of guessing.",
   },
   {
     // 2xko bbfcb00 ("completed v1.0 ready site"); hand-verified players from
@@ -298,6 +300,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: '2xko',
     kind: 'launch',
     title: 'The 2XKO Replay Database opens',
-    body: "Where this started: high-level 2XKO matches, searchable by champion, player and season. Player identities were verified by hand from the first day, and matches from before Season 0 were labelled beta rather than filed under a season that didn't exist yet.",
+    body: "Where this started: high-level 2XKO matches, searchable by champion, player and season. Player identities were verified by hand from the first day. Matches from before Season 0 were labelled beta rather than filed under a season that didn't exist yet.",
   },
 ];

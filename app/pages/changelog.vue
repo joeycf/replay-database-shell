@@ -3,7 +3,7 @@
     <header class="border-b border-border-subtle pb-8 pt-12 md:pb-10 md:pt-16">
       <h1 class="font-display text-d1 font-bold text-text">Changelog</h1>
       <p class="mt-3 max-w-2xl font-ui text-sub text-text-secondary">
-        What's changed on Replay Database — games joining, new filters, new sources of matches.
+        What's changed on Replay Database: games joining, new filters, new sources of matches.
         Newest first.
       </p>
     </header>
@@ -139,7 +139,7 @@ const months = computed(() => {
 useSiteMeta({
   title: 'Changelog — Replay Database',
   description:
-    'What has changed on Replay Database: games joining the platform, new filters, new sources of matches, and the archive milestones behind them — dated, newest first.',
+    'What has changed on Replay Database: games joining the platform, new filters, new sources of matches, and the archive milestones behind them. Dated, newest first.',
 });
 
 // Plain WebPage. The selector's ItemList is on another page and untouched:
