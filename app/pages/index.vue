@@ -38,7 +38,7 @@
              an edit to lib/changelog.ts, which redeploys this page anyway. -->
         <NuxtLink
           to="/changelog"
-          class="changelog-cta group mt-7 inline-flex items-center gap-2.5 border border-primary/45 bg-primary/10 px-5 py-2.5 font-ui text-[13px] font-semibold text-primary cut-sm"
+          class="changelog-cta group mt-7 inline-flex items-center gap-2.5 border border-primary/45 px-5 py-2.5 font-ui text-[13px] font-semibold text-primary cut-sm"
         >
           What's new
           <span
