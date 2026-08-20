@@ -80,6 +80,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    // shell 46aaba9 (the page), e5b5c71 (the selector's "What's new" link),
+    // 6f68476 (the footer link, engine v0.7.1), bebd64e (copy pass); all
+    // 2026-08-20, verified live at replaydatabase.com/changelog the same day.
+    date: '2026-08-20',
+    scope: 'shell',
+    kind: 'feature',
+    title: "The changelog you're reading",
+    body: "Every change a visitor can see now gets a dated entry here, newest first, going back to the day the 2XKO Replay Database opened. The entries are written by hand rather than pulled from commit messages, so this page carries what you can see or do differently, not every change to the pipelines behind it. The front door shows the date of the newest one, so you can tell at a glance whether anything has moved.",
+  },
+  {
     // tokon cc010f1 (footage completion, 08-17), 58836f3 (mid-set team changes),
     // f3dbbae; PLAN.md "Portrait arc CLOSED (2026-08-19)". The 85.7% share in
     // those sources is deliberately absent — it moves.
