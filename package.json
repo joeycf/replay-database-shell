@@ -10,11 +10,12 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt prepare && nuxt typecheck",
+    "typecheck": "nuxt prepare && nuxt typecheck && node scripts/verify-changelog.mjs",
     "lint": "nuxt prepare && eslint .",
     "lint:fix": "nuxt prepare && eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "verify:changelog": "node scripts/verify-changelog.mjs",
     "verify:shell": "node scripts/verify-shell.mjs",
     "verify:cutover": "node scripts/verify-cutover.mjs"
   },

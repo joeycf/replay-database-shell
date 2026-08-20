@@ -18,7 +18,9 @@ brand unmodified, so it favors no single game.
 
 ## Architecture
 
-The shell is three things: a page, a router, and a sitemap.
+The shell is four things: a selector, a changelog, a router, and a sitemap.
+(The diagram below traces the three with a routing role; the changelog is a
+static leaf.)
 
 ```
                     replaydatabase.com  (this repo, baseURL '/')
@@ -40,6 +42,12 @@ The shell is three things: a page, a router, and a sitemap.
   renders it), one card per game linking to its subpath, and `ItemList` JSON-LD.
   Replay counts appear only once the games publish `summary.json` — omitted until
   then, never faked.
+- **The changelog** (`app/pages/changelog.vue`) — the platform's public history,
+  read from the hand-curated `lib/changelog.ts` and prerendered like any other
+  route. Each entry's scope badge borrows that game's accent from `lib/games.ts`,
+  matched on `slug`. It is the one page here with editorial content, and the one
+  route that must be named in `nitro.prerender.routes` — see the standing rule on
+  `crawlLinks`.
 - **The router** (`vercel.json`) — external rewrites proxy `/2xko/*` and
   `/tekken/*` to each game's own Vercel deployment, plus the **permanent**
   redirect map that migrated 2XKO's legacy root URLs (`/champions/*`,
@@ -93,6 +101,7 @@ and there is no `NUXT_APP_BASE_URL` dance here — that's a game-app concern.
 | `npm run typecheck`                              | `nuxt prepare` + `nuxt typecheck` (vue-tsc)                                       |
 | `npm run lint` / `lint:fix`                      | ESLint over the whole repo                                                        |
 | `npm run format` / `format:check`                | Prettier                                                                          |
+| `npm run verify:changelog`                       | Schema gate on `lib/changelog.ts` — dates, scopes, kinds, ordering                |
 | `npm run verify:shell`                           | Headless gates on the **built** output — selector, theme, JSON-LD, `/health`, 404 |
 | `npm run verify:cutover <host>`                  | The post-cutover battery against a **live** host (defaults to replaydatabase.com) |
 | `node scripts/simulate-topology.mjs`             | Serve the built shell behind a faithful local implementation of `vercel.json`     |
@@ -112,6 +121,11 @@ three levels of check:
 - **`node scripts/simulate-topology.mjs`** reproduces production topology
   locally: redirects evaluated before the filesystem, then the shell's static
   output, then rewrites proxied to the two games' local builds, then the designed 404. This is how a routing change gets tested without deploying.
+- **`npm run verify:changelog`** validates `lib/changelog.ts` before anything
+  renders it: ISO dates, known scopes and kinds, reverse-chronological order, no
+  future dates, title and sentence limits. It runs as the last step of
+  `npm run typecheck`, because a malformed entry cannot fail a static build — it
+  just ships.
 - **`npm run verify:cutover`** runs against a live host: every legacy 2XKO URL
   shape redirecting through to a 200, both games clicking through the proxy with
   their own themes intact and canonicals on the apex origin, and `/sitemap.xml`
@@ -193,6 +207,8 @@ checking that limit first.
    the script. If the app's `npm run typecheck` ends in a repo-local data
    validator (`scripts/patches.ts --check` and friends), give it a `GATE_CMD`
    entry there too, so a failed validator isn't read as a bad engine pin.
+7. **Add the changelog entry in the same commit** — a new game is always worth
+   one. See "Maintaining the changelog" below for what an entry says.
 
 ## Adding an upcoming game (a "Coming Soon" card)
 
@@ -223,6 +239,31 @@ not wired into the build — `npm run generate` must not need Chrome.
 leaves `UPCOMING`, joins `GAMES` (appending), gains the three URL fields, and
 takes the `vercel.json` rewrite pair per the section above.
 
+## Maintaining the changelog
+
+`/changelog` is the platform's public history, and `lib/changelog.ts` is the
+whole of it — a hand-curated table in the same tradition as the games' season and
+patch tables. `npm run verify:changelog` keeps it well-formed; **what goes in it
+stays a human judgment**, and the file's own header is the long version of the
+rules below.
+
+**A user-visible change adds an entry in the same commit.** Launches always. A
+feature when a visitor could notice it. Internal work only through its visible
+effect, described as that effect — "first loads went from 31 MB to 7 MB", never
+the refactor that did it. Silence is a valid outcome: most commits earn nothing,
+and a thin month is a thin month.
+
+Two rules worth repeating because breaking them is invisible until it's public:
+
+- **Only numbers that stay true.** One-time deltas, frozen counts and
+  measurements are safe forever. Live totals are not — the archives grow daily,
+  the selector already shows those counts from each game's `summary.json`, and a
+  number baked into this static page is wrong by tomorrow. Where a launch total
+  is the point, say so and let the entry's date carry it.
+- **Dates come from git, not memory.** Every entry's provenance comment records
+  the commit or tag that dated it, so a row nobody can point at a source for is
+  visible rather than merely plausible.
+
 ## Standing rules (never undo)
 
 - **The redirect map is permanent infrastructure.** Those legacy 2XKO URLs were
@@ -242,7 +283,11 @@ takes the `vercel.json` rewrite pair per the section above.
   `/2xko/*` HTML that **shadows the rewrites and breaks both games**. With the
   flag off, only the three engine-seeded routes generate: `/`, `/health`,
   `/not-found`. The game links are plain `<a>` for the same reason — a full-page
-  navigation hits the edge rewrite instead of the SPA router.
+  navigation hits the edge rewrite instead of the SPA router. **The corollary:
+  every shell route beyond those three must be listed in
+  `nitro.prerender.routes` by hand** (`/changelog` is), because being linked
+  from the footer does not get a page crawled — it would build clean, work in
+  `nuxt dev`, and ship as a 404.
 
 ## Tech stack & engineering notes
 
@@ -267,10 +312,12 @@ tsconfig files).
 
 ### Things worth knowing
 
-- **This repo is almost entirely routing.** `app/` holds three files —
-  `app.config.ts`, `pages/index.vue`, `layouts/default.vue`. Everything visual
-  comes from the engine. The interesting code is `vercel.json`,
-  `modules/sitemap-index.ts`, and `lib/games.ts`.
+- **This repo is almost entirely routing.** `app/` holds five files —
+  `app.config.ts`, `pages/index.vue`, `pages/changelog.vue`,
+  `layouts/default.vue`, and `components/SiteFooter.vue`. Everything visual
+  comes from the engine; the layout and the footer are overrides of engine
+  components at the same path, not new designs. The interesting code is
+  `vercel.json`, `modules/sitemap-index.ts`, and `lib/games.ts`.
 - **The umbrella identity is expressed as empty strings.** `app.config.ts` sets
   `slug: ''` and `shortName: ''`, which is what makes the engine render the bare
   "Replay Database" brand and the umbrella wordmark instead of a per-game

@@ -48,6 +48,14 @@ export default defineNuxtConfig({
       // prefix is ever written. (The game links are plain <a> for full-page
       // navigation so runtime clicks hit the edge rewrite, not the SPA router.)
       crawlLinks: false,
+
+      // Every shell route beyond the three the engine seeds must be listed
+      // HERE. With crawlLinks:false there is no discovery: /changelog is linked
+      // from the site footer on every page and would still never generate —
+      // the page would build clean, work in `nuxt dev`, and ship as a 404.
+      // Safe to write unprefixed because the shell owns the apex (baseURL '/');
+      // a game app would have to joinURL() this against its own base.
+      routes: ['/changelog'],
     },
   },
 

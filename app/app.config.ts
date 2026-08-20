@@ -1,4 +1,5 @@
 import type { GameConfig } from '@engine/types';
+import { CHANGELOG } from '../lib/changelog';
 import { GAMES, UPCOMING } from '../lib/games';
 
 /**
@@ -17,6 +18,12 @@ import { GAMES, UPCOMING } from '../lib/games';
  * `upcoming` is announced-but-not-yet-in-the-archive games, and feeds the CARDS
  * ONLY — its type has no url/sitemapUrl/summaryUrl, so the JSON-LD and the
  * sitemap index can't see it (lib/games.ts explains why the split exists).
+ *
+ * `changelog` is the hand-curated platform history behind /changelog, and that
+ * page is its only consumer. It is deliberately NOT joined to `games` here: the
+ * page maps an entry's scope onto a game accent by SLUG at render time, which
+ * keeps lib/changelog.ts import-free so its validator can load it under Node's
+ * type stripping (see the header there).
  */
 export default defineAppConfig({
   game: {
@@ -35,4 +42,5 @@ export default defineAppConfig({
 
   games: GAMES,
   upcoming: UPCOMING,
+  changelog: CHANGELOG,
 });

@@ -22,7 +22,11 @@ import puppeteer from 'puppeteer-core';
  *      (Phase 6).
  *   4. /health renders under the shell's minimal chrome (no game nav).
  *   5. 404.html is the designed not-found page.
- *   6. No page request escapes the static root (no 404s on assets).
+ *   6. /changelog renders every entry, canonicalizes to the apex, emits WebPage
+ *      JSON-LD (never a second ItemList), lands in sitemap-pages.xml, and is
+ *      reachable from the footer on every page that wears one — with the
+ *      footer's new left column checked for collision at phone widths.
+ *   7. No page request escapes the static root (no 404s on assets).
  *
  * Chrome: /usr/bin/google-chrome-stable (STACK §5.9). Static server: local,
  * ephemeral port. Exit non-zero on any failed gate.
@@ -91,6 +95,16 @@ const SUMMARIES = {
     updated: '2026-07-26',
   },
 };
+/**
+ * The changelog, as lib/changelog.ts declares it. Restated rather than imported
+ * because this is a plain-node gate and the table is TypeScript — the same
+ * trade verify-cutover.mjs makes for GAMES. Restating it IS the drift gate:
+ * these three constants and the built page must agree.
+ */
+const CHANGELOG_ENTRIES = 25;
+const CHANGELOG_NEWEST = '2026-08-19';
+const CHANGELOG_NEWEST_TEXT = '19 Aug';
+
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
 const SUMMARY_RE = /^\/([^/]+)\/data\/summary\.json$/;
@@ -548,7 +562,147 @@ try {
     `h1=${JSON.stringify(nf)}`,
   );
 
-  // ── 4. request hygiene ───────────────────────────────────────────────────
+  // ── 4. /changelog ────────────────────────────────────────────────────────
+  // The apex's editorial page. Its real failure mode is SILENCE: with
+  // crawlLinks:false the route only exists because nuxt.config.ts seeds it, so
+  // dropping that seed leaves a page that builds clean, works in dev, and ships
+  // as a 404 nobody notices. Everything here is checked against the BUILT
+  // output for that reason.
+  console.log('\n[/changelog]');
+  currentPage = '/changelog';
+  await page.goto(`${origin}/changelog`, { waitUntil: 'networkidle0' });
+
+  const log = await page.evaluate(() => ({
+    h1: document.querySelector('h1')?.textContent?.trim() ?? null,
+    entries: document.querySelectorAll('main ol > li').length,
+    months: document.querySelectorAll('main section > h2').length,
+    canonical: document.querySelector('link[rel="canonical"]')?.href ?? null,
+    // Badge tint is inline per entry (the accent is per-GAME data, not a token),
+    // so read the computed colors and count the distinct ones.
+    badgeColors: [...document.querySelectorAll('main ol > li .badge')].map(
+      (b) => getComputedStyle(b).color,
+    ),
+    // Dates must survive prerender as the authored day. A `new Date(iso)` parse
+    // would render UTC-midnight as the PREVIOUS day in any negative timezone,
+    // and the static HTML is what a visitor sees before hydration.
+    firstDate: document.querySelector('main ol > li time')?.getAttribute('datetime') ?? null,
+    firstDateText: document.querySelector('main ol > li time')?.textContent?.trim() ?? null,
+    jsonLdTypes: (() => {
+      try {
+        return [...document.querySelectorAll('script[type="application/ld+json"]')]
+          .map((n) => JSON.parse(n.textContent)['@type'])
+          .sort();
+      } catch {
+        return ['(unparseable)'];
+      }
+    })(),
+  }));
+
+  check(`/changelog renders (h1=${JSON.stringify(log.h1)})`, log.h1 === 'Changelog');
+  check(
+    `all ${CHANGELOG_ENTRIES} entries render (${log.entries}) across ${log.months} month section(s)`,
+    log.entries === CHANGELOG_ENTRIES && log.months > 0,
+  );
+  check(
+    `canonical is the apex /changelog (${log.canonical})`,
+    log.canonical === 'https://replaydatabase.com/changelog',
+  );
+  check(
+    `first entry's date renders as its authored day, not UTC-shifted (${log.firstDate} → ${JSON.stringify(log.firstDateText)})`,
+    log.firstDate === CHANGELOG_NEWEST && log.firstDateText === CHANGELOG_NEWEST_TEXT,
+  );
+  // One badge per entry, and the palette is the four game accents plus the
+  // umbrella teal for the platform-wide scopes — five distinct colors. Fewer
+  // means a scope silently fell through to the fallback (the tekken8-vs-tekken
+  // trap: lib/games.ts keys on `id`, the changelog on `slug`).
+  check(
+    `every entry carries a scope badge (${log.badgeColors.length})`,
+    log.badgeColors.length === CHANGELOG_ENTRIES,
+  );
+  const distinctBadges = new Set(log.badgeColors);
+  check(
+    `badges use all 4 game accents + the umbrella teal (${distinctBadges.size} distinct)`,
+    distinctBadges.size === 5,
+    [...distinctBadges].join(', '),
+  );
+  // The selector's ItemList must not follow us here, and nothing on this page
+  // may claim to be one: useJsonLd appends, so a stray ItemList would make the
+  // apex's structured data ambiguous.
+  check(
+    `JSON-LD is WebPage only, no ItemList (${log.jsonLdTypes.join(', ')})`,
+    log.jsonLdTypes.includes('WebPage') && !log.jsonLdTypes.includes('ItemList'),
+  );
+
+  // The page sitemap, read off disk for the same reason the index is: it is a
+  // build artifact written on prerender:done, not a route. This is the
+  // assertion that fails if the prerender seed is ever dropped.
+  const pagesSitemap = readFileSync(join(STATIC_DIR, 'sitemap-pages.xml'), 'utf8');
+  const pageLocs = [...pagesSitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  check(
+    `sitemap-pages.xml lists / and /changelog (${pageLocs.length} urls)`,
+    pageLocs.includes('https://replaydatabase.com/') &&
+      pageLocs.includes('https://replaydatabase.com/changelog'),
+    pageLocs.join(', '),
+  );
+
+  // The footer link is the only navigation the shell has, and it must be a real
+  // link on every page that wears the footer — including the selector, which
+  // renders SiteFooter itself under `layout: false`.
+  console.log('\n[footer]');
+  for (const path of ['/', '/health', '/changelog']) {
+    currentPage = path;
+    await page.goto(`${origin}${path}`, { waitUntil: 'networkidle0' });
+    const footerLink = await page.evaluate(() => {
+      const a = document.querySelector('footer a[href="/changelog"]');
+      return a
+        ? { text: a.textContent.trim(), visible: a.getBoundingClientRect().width > 0 }
+        : null;
+    });
+    check(
+      `${path}: footer links to /changelog (${JSON.stringify(footerLink)})`,
+      !!footerLink && footerLink.text === 'Changelog' && footerLink.visible,
+    );
+  }
+
+  // Phone widths: the footer's left column was EMPTY below lg before this link
+  // existed, so the link is new content in the tightest row on the page, and
+  // /changelog itself must not introduce a horizontal scrollbar.
+  console.log('\n[/changelog at phone widths]');
+  for (const width of [320, 360, 380]) {
+    await page.setViewport({ width, height: 900 });
+    for (const path of ['/', '/changelog']) {
+      currentPage = `${path} (${width}px)`;
+      await page.goto(`${origin}${path}`, { waitUntil: 'networkidle0' });
+      const fit = await page.evaluate(() => {
+        const foot = document.querySelector('footer');
+        const link = document.querySelector('footer a[href="/changelog"]');
+        const bmc = document.querySelector('footer a[target="_blank"]');
+        const box = (el) => (el ? el.getBoundingClientRect() : null);
+        const l = box(link);
+        const b = box(bmc);
+        return {
+          overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          footerOverflow: foot ? foot.scrollWidth > foot.clientWidth : true,
+          // The two footer items must not collide — the grid keeps BMC centered
+          // only while column 1 fits.
+          collides: !!(l && b) && l.right > b.left,
+        };
+      });
+      check(
+        `${width}px ${path}: no page or footer overflow, footer items clear (${JSON.stringify(fit)})`,
+        !fit.overflow && !fit.footerOverflow && !fit.collides,
+      );
+    }
+  }
+  await page.setViewport({ width: 1280, height: 900 });
+  currentPage = '/changelog';
+  await page.goto(`${origin}/changelog`, { waitUntil: 'networkidle0' });
+  await page.screenshot({
+    path: process.env.SHOT_CHANGELOG_PATH || '/tmp/shell-changelog.png',
+    fullPage: true,
+  });
+
+  // ── 5. request hygiene ───────────────────────────────────────────────────
   console.log('\n[requests]');
   const unexpected = failedRequests.filter(
     (r) =>

@@ -20,7 +20,11 @@ import puppeteer from 'puppeteer-core';
  *   4. /robots.txt points at /sitemap.xml; /sitemap.xml is a sitemap INDEX
  *      listing sitemap-pages.xml + both game sitemaps; each game sitemap's
  *      <loc>s ALL carry the game prefix; no unprefixed game <loc> anywhere.
- *   5. (Phase 6) Every /<slug>/data/summary.json serves 200 JSON THROUGH the
+ *   5. /changelog serves 200 through the apex, renders its entries with the
+ *      game accents intact, canonicalizes to the apex, carries no second
+ *      ItemList, is listed in sitemap-pages.xml (whose contents are fetched
+ *      here, not just referenced), and is linked from the footer everywhere.
+ *   6. (Phase 6) Every /<slug>/data/summary.json serves 200 JSON THROUGH the
  *      apex with the right identity and a real replay count; the selector's
  *      per-card counts and aggregate line reflect them; and with one summary
  *      blocked, that card degrades gracefully (positive control).
@@ -197,6 +201,30 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     );
   }
 
+  // ── the shell's OWN pages (Phase 9 / changelog) ─────────────────────────
+  // The index is asserted above to LIST sitemap-pages.xml; this fetches it. A
+  // shell route that stopped prerendering would still leave the index valid and
+  // the page sitemap silently one line shorter.
+  console.log('\n[shell pages]');
+  {
+    const res = await fetch(`${HOST}/sitemap-pages.xml`);
+    check(`/sitemap-pages.xml serves (${res.status})`, res.status === 200);
+    if (res.status === 200) {
+      const locs = [...(await res.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+      check(
+        `  page sitemap lists the selector and /changelog (${locs.length} urls)`,
+        locs.includes(`${APEX}/`) && locs.includes(`${APEX}/changelog`),
+        locs.join(', '),
+      );
+      // No game URL may appear here — those belong to the games' own sitemaps,
+      // which the index references separately.
+      const strays = locs.filter((l) => GAMES.some((g) => l.startsWith(`${APEX}/${g.slug}`)));
+      check(`  no game URL leaked into the page sitemap`, strays.length === 0, strays.join(', '));
+    }
+    const page = await fetch(`${HOST}/changelog`);
+    check(`/changelog serves 200 through the apex (${page.status})`, page.status === 200);
+  }
+
   // legacy 301s → final 200 (the chain is followed hop by hop)
   const legacy = ['/champions/ekko', '/stats', '/?fuse=juggernaut'];
   // a REAL player id sampled from the game sitemap, so the target is a live page
@@ -276,6 +304,45 @@ try {
   // card gates (no href, not inside an <a>, no focus stop, badge visible
   // without hover) when a game is next announced.
   check(`no upcoming card on the apex (UPCOMING is empty)`, sel.upcomingCount === 0);
+
+  // ── /changelog through the shell host ──
+  console.log('\n[/changelog]');
+  await page.goto(`${HOST}/changelog`, { waitUntil: 'networkidle0' });
+  const log = await page.evaluate(() => ({
+    h1: document.querySelector('h1')?.textContent?.trim() ?? null,
+    entries: document.querySelectorAll('main ol > li').length,
+    canonical: document.querySelector('link[rel="canonical"]')?.href ?? null,
+    badges: new Set(
+      [...document.querySelectorAll('main ol > li .badge')].map((b) => getComputedStyle(b).color),
+    ).size,
+    hasItemList: [...document.querySelectorAll('script[type="application/ld+json"]')].some((n) => {
+      try {
+        return JSON.parse(n.textContent)['@type'] === 'ItemList';
+      } catch {
+        return false;
+      }
+    }),
+  }));
+  check(`/changelog renders (h1=${JSON.stringify(log.h1)})`, log.h1 === 'Changelog');
+  // A floor, not an equality: entries are appended over time and this script
+  // runs against whatever is deployed, which may be ahead of this checkout.
+  check(`changelog renders its entries (${log.entries})`, log.entries >= 25);
+  check(
+    `canonical is the apex /changelog (${log.canonical})`,
+    log.canonical === `${APEX}/changelog`,
+  );
+  check(`badges carry the game accents + umbrella teal (${log.badges} distinct)`, log.badges === 5);
+  check(`no ItemList on /changelog — the apex's is the selector's`, !log.hasItemList);
+
+  for (const path of ['/', '/health', '/changelog']) {
+    await page.goto(`${HOST}${path}`, { waitUntil: 'networkidle0' });
+    const link = await page.evaluate(
+      () => document.querySelector('footer a[href="/changelog"]')?.textContent?.trim() ?? null,
+    );
+    check(`${path}: footer links to /changelog (${JSON.stringify(link)})`, link === 'Changelog');
+  }
+
+  await page.goto(`${HOST}/`, { waitUntil: 'networkidle0' });
 
   // ── selector counts + aggregate (Phase 6) ──
   // The counts arrive client-side, so they are read from the LIVE page rather
