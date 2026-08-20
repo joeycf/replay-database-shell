@@ -47,7 +47,10 @@ static leaf.)
   route. Each entry's scope badge borrows that game's accent from `lib/games.ts`,
   matched on `slug`. It is the one page here with editorial content, and the one
   route that must be named in `nitro.prerender.routes` — see the standing rule on
-  `crawlLinks`.
+  `crawlLinks`. The **footer** link to it lives in the engine's `SiteFooter`
+  (v0.7.1) rather than here, so it reaches the four games too; it is an absolute
+  apex URL for that reason, and the shell briefly carried its own footer
+  override to ship the link before that release.
 - **The router** (`vercel.json`) — external rewrites proxy `/2xko/*` and
   `/tekken/*` to each game's own Vercel deployment, plus the **permanent**
   redirect map that migrated 2XKO's legacy root URLs (`/champions/*`,
@@ -312,12 +315,12 @@ tsconfig files).
 
 ### Things worth knowing
 
-- **This repo is almost entirely routing.** `app/` holds five files —
-  `app.config.ts`, `pages/index.vue`, `pages/changelog.vue`,
-  `layouts/default.vue`, and `components/SiteFooter.vue`. Everything visual
-  comes from the engine; the layout and the footer are overrides of engine
-  components at the same path, not new designs. The interesting code is
-  `vercel.json`, `modules/sitemap-index.ts`, and `lib/games.ts`.
+- **This repo is almost entirely routing.** `app/` holds four files —
+  `app.config.ts`, `pages/index.vue`, `pages/changelog.vue`, and
+  `layouts/default.vue`. Everything visual comes from the engine; the layout is
+  an override of the engine's at the same path, not a new design. The
+  interesting code is `vercel.json`, `modules/sitemap-index.ts`, `lib/games.ts`,
+  and `lib/changelog.ts`.
 - **The umbrella identity is expressed as empty strings.** `app.config.ts` sets
   `slug: ''` and `shortName: ''`, which is what makes the engine render the bare
   "Replay Database" brand and the umbrella wordmark instead of a per-game

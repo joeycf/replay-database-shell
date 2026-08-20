@@ -679,22 +679,30 @@ try {
     pageLocs.join(', '),
   );
 
-  // The footer link is the only navigation the shell has, and it must be a real
-  // link on every page that wears the footer — including the selector, which
-  // renders SiteFooter itself under `layout: false`.
+  // The footer link comes from the ENGINE as of v0.7.1, and it is ABSOLUTE —
+  // the same component renders inside a game, where a root-relative href would
+  // 404 on that game's own *.vercel.app host. Asserting the absolute apex form
+  // is what catches a regression to a bare '/changelog'.
   console.log('\n[footer]');
   for (const path of ['/', '/health', '/changelog']) {
     currentPage = path;
     await page.goto(`${origin}${path}`, { waitUntil: 'networkidle0' });
     const footerLink = await page.evaluate(() => {
-      const a = document.querySelector('footer a[href="/changelog"]');
+      const a = document.querySelector('footer a[href$="/changelog"]');
       return a
-        ? { text: a.textContent.trim(), visible: a.getBoundingClientRect().width > 0 }
+        ? {
+            href: a.getAttribute('href'),
+            text: a.textContent.trim(),
+            visible: a.getBoundingClientRect().width > 0,
+          }
         : null;
     });
     check(
-      `${path}: footer links to /changelog (${JSON.stringify(footerLink)})`,
-      !!footerLink && footerLink.text === 'Changelog' && footerLink.visible,
+      `${path}: footer links to the apex changelog (${JSON.stringify(footerLink)})`,
+      !!footerLink &&
+        footerLink.href === 'https://replaydatabase.com/changelog' &&
+        footerLink.text === 'Changelog' &&
+        footerLink.visible,
     );
   }
 
@@ -709,7 +717,7 @@ try {
       await page.goto(`${origin}${path}`, { waitUntil: 'networkidle0' });
       const fit = await page.evaluate(() => {
         const foot = document.querySelector('footer');
-        const link = document.querySelector('footer a[href="/changelog"]');
+        const link = document.querySelector('footer a[href$="/changelog"]');
         const bmc = document.querySelector('footer a[target="_blank"]');
         const box = (el) => (el ? el.getBoundingClientRect() : null);
         const l = box(link);

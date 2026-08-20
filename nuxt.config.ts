@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   // which the shell inherits from the engine's public/ like every other icon,
   // and a stats tile the shell has no page for. Kept in step so the whole
   // platform sits on one tag.
-  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.7.0', { install: true }]],
+  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.7.1', { install: true }]],
 
   compatibilityDate: '2025-07-01',
 

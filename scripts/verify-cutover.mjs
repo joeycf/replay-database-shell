@@ -337,9 +337,9 @@ try {
   for (const path of ['/', '/health', '/changelog']) {
     await page.goto(`${HOST}${path}`, { waitUntil: 'networkidle0' });
     const link = await page.evaluate(
-      () => document.querySelector('footer a[href="/changelog"]')?.textContent?.trim() ?? null,
+      () => document.querySelector('footer a[href$="/changelog"]')?.getAttribute('href') ?? null,
     );
-    check(`${path}: footer links to /changelog (${JSON.stringify(link)})`, link === 'Changelog');
+    check(`${path}: footer links to the apex changelog (${link})`, link === `${APEX}/changelog`);
   }
 
   await page.goto(`${HOST}/`, { waitUntil: 'networkidle0' });
@@ -610,6 +610,21 @@ try {
     } else {
       check(`character page found in /${g.slug}/sitemap.xml`, false);
     }
+
+    // The changelog link inside the GAME (engine v0.7.1). This is the gate that
+    // proves the point of that release: before it, a visitor deep in a game had
+    // no route to /changelog except back through the selector. It must be the
+    // ABSOLUTE apex URL — a NuxtLink would resolve to /<slug>/changelog, and a
+    // root-relative href would 404 on this game's own vercel.app host.
+    await page.goto(`${HOST}/${g.slug}/`, { waitUntil: 'networkidle0' });
+    const gameLink = await page.evaluate(() => {
+      const a = document.querySelector('footer a[href$="/changelog"]');
+      return a ? { href: a.getAttribute('href'), text: a.textContent.trim() } : null;
+    });
+    check(
+      `/${g.slug}/ footer links to the apex changelog (${JSON.stringify(gameLink)})`,
+      !!gameLink && gameLink.href === `${APEX}/changelog` && gameLink.text === 'Changelog',
+    );
 
     // /health through the shell
     const health = await page.goto(`${HOST}/${g.slug}/health`, { waitUntil: 'networkidle0' });
