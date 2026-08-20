@@ -29,6 +29,29 @@
           />
           {{ aggregate }}
         </p>
+
+        <!-- The changelog's front-door entry point. Sits between the aggregate
+             and the cards because that is the seam in the reading order: the
+             hero says what the archive IS, the cards say which game, and this
+             says what changed lately. Its date comes from the newest entry, so
+             it cannot go stale unattended — the only thing that changes it is
+             an edit to lib/changelog.ts, which redeploys this page anyway. -->
+        <NuxtLink
+          to="/changelog"
+          class="changelog-cta group mt-7 inline-flex items-center gap-2.5 border border-primary/45 bg-primary/10 px-5 py-2.5 font-ui text-[13px] font-semibold text-primary cut-sm"
+        >
+          What's new
+          <span
+            class="font-mono text-[11px] font-normal text-text-muted"
+            aria-hidden="true"
+            >{{ latestChange }}</span
+          >
+          <span
+            class="transition-transform duration-normal group-hover:translate-x-1"
+            aria-hidden="true"
+            >→</span
+          >
+        </NuxtLink>
       </section>
 
       <!-- One card per game. Each is a full-page navigation (<a>, not NuxtLink)
@@ -196,6 +219,21 @@ const upcoming = useAppConfig().upcoming;
 const site = useSiteOrigin();
 
 /**
+ * The newest changelog entry's date, shown on the front-door link. Derived, not
+ * written down: the only edit that moves it is an edit to lib/changelog.ts,
+ * which redeploys this page in the same commit — so unlike a release date in a
+ * card tagline (see README), this one cannot go stale while nobody is looking.
+ * Parsed from the ISO parts rather than `new Date(iso)`, which reads a bare day
+ * as UTC midnight and renders as the day before in any negative timezone.
+ */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const latestChange = computed(() => {
+  const iso = useAppConfig().changelog[0]?.date;
+  if (!iso) return '';
+  return `${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+});
+
+/**
  * Per-game replay counts, read from each game's data/summary.json (PLAN §5 A.4,
  * shipped in Phase 6). Two deliberate properties:
  *
@@ -335,6 +373,16 @@ useJsonLd([
   .aggregate {
     min-height: 0;
   }
+}
+/* Structural hover only, same idiom as the cards — the color is a token. */
+.changelog-cta {
+  transition:
+    background-color 0.18s var(--ease-snap),
+    border-color 0.18s var(--ease-snap);
+}
+.changelog-cta:hover {
+  background: color-mix(in oklab, var(--color-primary) 18%, transparent);
+  border-color: var(--color-primary);
 }
 .art {
   transition: transform 0.4s var(--ease-snap);

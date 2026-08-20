@@ -16,7 +16,9 @@ import puppeteer from 'puppeteer-core';
  *   2. ItemList JSON-LD parses and enumerates both games at apex URLs — and the
  *      sitemap index lists exactly the games that HAVE replays. An
  *      announced-but-unshipped game must reach neither (see lib/games.ts).
- *   3. Per-card replay counts + the aggregate hero line, and the POSITIVE
+ *   3. The selector's /changelog link sits between the aggregate and the cards
+ *      and carries the newest entry's date.
+ *   4. Per-card replay counts + the aggregate hero line, and the POSITIVE
  *      CONTROL: with one game's summary.json blocked, that card omits its count
  *      while the card heights hold and the aggregate sums only what resolved
  *      (Phase 6).
@@ -252,6 +254,38 @@ try {
     `.game-card is the four LIVE cards and nothing else`,
     gameCardClass === 4,
     `${gameCardClass} found`,
+  );
+
+  // The changelog's front-door entry point. Asserted here, not just in the
+  // footer block, because this one is a HERO element: it sits between the
+  // aggregate and the card grid, so if it ever renders at zero size or loses
+  // its href the page looks unchanged while the link is simply gone.
+  const cta = await page.evaluate(() => {
+    const a = document.querySelector('a.changelog-cta');
+    if (!a) return null;
+    const r = a.getBoundingClientRect();
+    const grid = document.querySelector('section[aria-label="Games"]')?.getBoundingClientRect();
+    return {
+      href: a.getAttribute('href'),
+      text: a.textContent.replace(/\s+/g, ' ').trim(),
+      visible: r.width > 0 && r.height > 0,
+      // It must sit BETWEEN the aggregate pill and the cards, which is the
+      // whole point of its placement.
+      belowPill:
+        r.top > (document.querySelector('p.aggregate')?.getBoundingClientRect().bottom ?? 0),
+      aboveGrid: !!grid && r.bottom <= grid.top,
+    };
+  });
+  check(
+    `selector links to /changelog above the card grid (${JSON.stringify(cta)})`,
+    !!cta && cta.href === '/changelog' && cta.visible && cta.belowPill && cta.aboveGrid,
+  );
+  // The date is DERIVED from the newest entry, so a stale literal here is the
+  // failure this catches — it is the one number on the selector that is not
+  // fetched at runtime.
+  check(
+    `its date is the newest changelog entry (${JSON.stringify(cta?.text)})`,
+    !!cta && cta.text.includes(CHANGELOG_NEWEST_TEXT),
   );
 
   const navLeak = await page.evaluate(
