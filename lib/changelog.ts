@@ -80,6 +80,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    // engine v0.11.0 (ComboForge cross-link) plus the four app-side configs and
+    // pin bumps, all 2026-08-28. Character counts frozen from comboforge.gg's
+    // public roster API the same day: 15 of 15 for 2XKO, 21 of 21 for Tōkon,
+    // 31 of 31 for SF6, 36 of 42 for Tekken.
+    date: '2026-08-28',
+    scope: 'platform',
+    kind: 'feature',
+    title: 'Combos for a character, one click away',
+    body: "Every character page now links straight to that character's combos on ComboForge, our partner combo database. It goes to the character, not the front page, on all four games: 103 of the 109 characters here have a page over there, and the six that don't (all Tekken) link to the Tekken 8 combo list instead. The link opens in a new tab, so you keep your place here.",
+  },
+  {
     // shell 46aaba9 (the page), e5b5c71 (the selector's "What's new" link),
     // 6f68476 (the footer link, engine v0.7.1), bebd64e (copy pass); all
     // 2026-08-20, verified live at replaydatabase.com/changelog the same day.
