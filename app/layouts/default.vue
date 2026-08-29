@@ -36,5 +36,10 @@
  * The selector page itself uses `layout: false` and supplies its own hero; this
  * layout is what /health and the designed 404 (error.vue → NotFoundContent)
  * wear — just the umbrella wordmark (a link home) and the shared footer.
+ *
+ * BECAUSE THIS REPLACES THE ENGINE LAYOUT, it also drops the engine's
+ * <LeavingSiteDialog /> mount (engine v0.12.0). Correct today — the shell carries
+ * no partner links — but one added to a shell page would render with no
+ * interstitial and nothing would fail, so mount it here at the same time.
  */
 </script>
