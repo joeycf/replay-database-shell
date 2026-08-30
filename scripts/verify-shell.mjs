@@ -103,9 +103,9 @@ const SUMMARIES = {
  * trade verify-cutover.mjs makes for GAMES. Restating it IS the drift gate:
  * these three constants and the built page must agree.
  */
-const CHANGELOG_ENTRIES = 25;
-const CHANGELOG_NEWEST = '2026-08-19';
-const CHANGELOG_NEWEST_TEXT = '19 Aug';
+const CHANGELOG_ENTRIES = 30;
+const CHANGELOG_NEWEST = '2026-08-30';
+const CHANGELOG_NEWEST_TEXT = '30 Aug';
 
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));

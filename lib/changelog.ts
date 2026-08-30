@@ -80,6 +80,48 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    // tekken ace0d3b "data: 317 tournament sets from 26 events, via the Replay
+    // Theater index", merged to main and confirmed by that repo's
+    // verify:deployed on 2026-08-30. Counts frozen from data/videos.json the
+    // same day: 317 records carrying a videoId, over 62 distinct videoIds, 26
+    // distinct event tags, 2024-02-04 to 2025-03-16, all season 1. Twelve tags
+    // are ParagOnline weeklies and carry 224 of the 317; CEOtaku holds 18.
+    // NOT "62 event streams organisers uploaded whole", which an earlier draft
+    // said and the data refuses: 31 of the 62 videos are under 20 minutes and
+    // four events are posted one video per match, so 32 videos hold a single
+    // set at offset 0. Hence "most", with the frozen 285 that do share a video.
+    // Combo Breaker is cut from the list too: its 2 sets come from an 8-minute
+    // clip on a competitor's own channel, and naming it beside CEOtaku promised
+    // major coverage the batch does not hold. The 274/274 is a re-measurement
+    // against the uploaders' own descriptions: 27 of the 62 VODs publish a
+    // chapter list, 274 sets land inside one, and all 274 match to the second.
+    // The tournament group's new total is deliberately absent: it grows.
+    date: '2026-08-30',
+    scope: 'tekken',
+    kind: 'data',
+    title: '317 tournament sets for Tekken',
+    body: "317 tournament sets join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that set instead of at the top of the bracket. The timings come from Replay Theater, a fan-run match index, and match the uploaders' own chapter markers on every one of the 274 sets that could be checked.",
+  },
+  {
+    // tokon ffb6169 "data: 44 tournament sets from 5 events, via the Replay
+    // Theater index", merged and verify:deployed 2026-08-30. 44 records over 5
+    // videoIds and 5 event names, 2026-07-26 to 2026-08-25. The eleven days:
+    // TNS Beta Tournament published 2026-07-26 against the game's release on
+    // 2026-08-06 (LAUNCH in that repo's scripts/patches.ts), and it is the VOD's
+    // publish date, which is what the record carries. 18 of the 44 are that
+    // bracket and they sit in season 0, the era the patch facet labels
+    // "Pre-release" — worth naming, because a pre-release build is the
+    // difference between usable and not for a matchup lookup. All 88 sides
+    // arrive at four fighters. An earlier draft closed on "which most sides
+    // here cannot manage", which is the corpus-wide completion share the rule
+    // above forbids, rounded to a word: it is 58% today and moves.
+    date: '2026-08-30',
+    scope: 'tokon',
+    kind: 'data',
+    title: "Tōkon's first five tournaments",
+    body: "Forty-four sets from Tōkon's first five tournaments, cut from five event streams each running well over an hour. Eighteen come from a beta bracket published eleven days before the game shipped, filed under Pre-release so you can leave them out. All 88 sides arrive with their four fighters already named, so none of these needed the footage read to complete a team.",
+  },
+  {
     // engine v0.11.0 (character band) + v0.12.0 (Combos nav item, leaving-site
     // dialog), plus the four app-side configs and pin bumps, all 2026-08-28.
     // Character counts frozen from comboforge.gg's public roster API the same
@@ -90,6 +132,28 @@ export const CHANGELOG: ChangelogEntry[] = [
     kind: 'feature',
     title: 'Combos for a character, one click away',
     body: "Every character page now links straight to that character's combos on ComboForge, our partner combo database, and a Combos link in the top bar opens the whole list for the game you're on. The character link goes to the character, not the front page: 103 of the 109 characters here have a page over there, and the six that don't (all Tekken) open the Tekken 8 combo list instead. Following one asks first and opens it in a new tab, so you keep your place here.",
+  },
+  {
+    // 2xko e0c7d1d "data: 888 tournament sets from replayTheater — 5,638 →
+    // 6,526", 2026-08-28, the day the source landed. Backfilled on 2026-08-30
+    // while writing the Tekken and Tōkon rows: the change shipped without an
+    // entry, and it is the one that introduced records that are slices of a
+    // video. Counts frozen from data/videos.json: 888 records with a videoId
+    // over 64 distinct videoIds and 63 event TAGS. "Brackets", not "events":
+    // several tags are phases of one tournament (EVO 2026 Pools / Top 24 /
+    // Top 8, Frosty Faustings XVIII Pools / Top 24 / Top 96), which collapse to
+    // 57. Every one of the 64 videos runs over an hour, median 3h12m, so
+    // "an hour or more" is measured rather than assumed. The footage reaches
+    // back to 2025-09-14, well before the source itself. 811/848 re-measured
+    // against the uploaders' descriptions the same way as Tekken's. The
+    // mechanism sentence an earlier draft carried is gone: the Tekken row two
+    // above already teaches it, and the rule forbids a sentence that would
+    // survive being deleted.
+    date: '2026-08-28',
+    scope: '2xko',
+    kind: 'data',
+    title: '888 tournament sets, cut from the streams',
+    body: '888 tournament sets join 2XKO, cut from 64 streams that each run an hour or more, across 63 brackets and reaching back to September 2025. This is where records that are a slice of a video started: the set list comes from Replay Theater, a fan-run match index, and where an uploader had published chapter markers the two timings agreed on 811 of the 848 sets that could be checked.',
   },
   {
     // shell 46aaba9 (the page), e5b5c71 (the selector's "What's new" link),
