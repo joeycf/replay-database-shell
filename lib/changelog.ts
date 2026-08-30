@@ -100,7 +100,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tekken',
     kind: 'data',
     title: '317 tournament sets for Tekken',
-    body: "317 tournament sets join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that set instead of at the top of the bracket. The timings come from Replay Theater, a fan-run match index, and match the uploaders' own chapter markers on every one of the 274 sets that could be checked.",
+    body: "317 tournament sets join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that set instead of at the top of the bracket.",
   },
   {
     // tokon ffb6169 "data: 44 tournament sets from 5 events, via the Replay
@@ -153,7 +153,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: '2xko',
     kind: 'data',
     title: '888 tournament sets, cut from the streams',
-    body: '888 tournament sets join 2XKO, cut from 64 streams that each run an hour or more, across 63 brackets and reaching back to September 2025. This is where records that are a slice of a video started: the set list comes from Replay Theater, a fan-run match index, and where an uploader had published chapter markers the two timings agreed on 811 of the 848 sets that could be checked.',
+    body: '888 tournament sets join 2XKO, cut from 64 streams that each run an hour or more, across 63 brackets and reaching back to September 2025.',
   },
   {
     // shell 46aaba9 (the page), e5b5c71 (the selector's "What's new" link),
