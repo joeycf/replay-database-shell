@@ -100,7 +100,9 @@ export const CHANGELOG: ChangelogEntry[] = [
     // several games with counter-picks between them, and the data separates the
     // two cleanly: 1.8% of these records show a side changing character, against
     // 21.0% of the 81 Evo SETS already in this archive. Twelve times the rate.
-    // The catalogue's own API calls them matches, and so does this.
+    // The catalogue's own API calls them matches, and so does this. The closing
+    // clause said "at that set" while the rest of the row said matches; that was
+    // the last of it, corrected 2026-08-31 when the three sibling rows were.
     // "77 brackets" is the tag count. Four of the 77 are phases of another
     // (CEOtaku Pools and Top 16, and two more), so 73 are distinct events; the
     // looser word is the one the 2XKO row already uses for the same shape.
@@ -108,7 +110,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'sf6',
     kind: 'data',
     title: '1,065 tournament matches, cut from the streams',
-    body: '1,065 tournament matches arrive in SF6 from 77 brackets, nearly all of them Season 1 and Season 2 footage running from June 2023 to April 2026, so a current-patch filter leaves them out. Two recurring series carry most of it, Cobra Kai and Bloodsport between them holding 683 across 39 instalments, with LVL UP EXPO and CEOtaku behind them. Most are a moment inside a longer stream rather than an upload of its own (1,044 of the 1,065), so opening one starts the video at that set instead of at the top of the bracket.',
+    body: '1,065 tournament matches arrive in SF6 from 77 brackets, nearly all of them Season 1 and Season 2 footage running from June 2023 to April 2026, so a current-patch filter leaves them out. Two recurring series carry most of it, Cobra Kai and Bloodsport between them holding 683 across 39 instalments, with LVL UP EXPO and CEOtaku behind them. Most are a moment inside a longer stream rather than an upload of its own (1,044 of the 1,065), so opening one starts the video at that match instead of at the top of the bracket.',
   },
   {
     // tekken ace0d3b "data: 317 tournament sets from 26 events, via the Replay
@@ -127,11 +129,20 @@ export const CHANGELOG: ChangelogEntry[] = [
     // against the uploaders' own descriptions: 27 of the 62 VODs publish a
     // chapter list, 274 sets land inside one, and all 274 match to the second.
     // The tournament group's new total is deliberately absent: it grows.
+    // MATCHES, NOT SETS — amended 2026-08-31, and this row is the one the test
+    // was actually run for. The counter-pick rate separates the two cleanly: a
+    // set is several games with counter-picks between them, and 2.5% of these
+    // records show a side changing character (8 of 317) against 22.2% of the 63
+    // committed Evo SETS in this repo (14 of 63). Nine times the rate, and the
+    // same shape SF6 measured at 1.8% vs 21.0%. The eight are not spread across
+    // the corpus either — five are one player and all eight are the ParagOnline
+    // series, which is one curator occasionally recording a switch rather than a
+    // set-level convention. The catalogue's own API field is `matches`.
     date: '2026-08-30',
     scope: 'tekken',
     kind: 'data',
-    title: '317 tournament sets for Tekken',
-    body: '317 tournament sets join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that set instead of at the top of the bracket.',
+    title: '317 tournament matches for Tekken',
+    body: '317 tournament matches join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that match instead of at the top of the bracket.',
   },
   {
     // tokon ffb6169 "data: 44 tournament sets from 5 events, via the Replay
@@ -146,11 +157,21 @@ export const CHANGELOG: ChangelogEntry[] = [
     // arrive at four fighters. An earlier draft closed on "which most sides
     // here cannot manage", which is the corpus-wide completion share the rule
     // above forbids, rounded to a word: it is 58% today and moves.
+    // MATCHES, NOT SETS — amended 2026-08-31, and unlike Tekken's row this one
+    // is NOT backed by the counter-pick test, which has zero power here. The test
+    // asks how often a side changed character; the catalogue carries exactly four
+    // character columns per side and this game fills all four on 100% of entries,
+    // so a fifth fighter is unrepresentable and the rate is 0 of 44 by
+    // construction rather than by measurement. What the amendment rests on
+    // instead: the catalogue's own API field is `matches`, and the two games
+    // where the test COULD run both came back matches (SF6 1.8% vs 21.0%, Tekken
+    // 2.5% vs 22.2%). Leaving this row alone would have made "sets" mean
+    // whichever games happened to be untestable.
     date: '2026-08-30',
     scope: 'tokon',
     kind: 'data',
     title: "Tōkon's first five tournaments",
-    body: "Forty-four sets from Tōkon's first five tournaments, cut from five event streams each running well over an hour. Eighteen come from a beta bracket published eleven days before the game shipped, filed under Pre-release so you can leave them out. All 88 sides arrive with their four fighters already named, so none of these needed the footage read to complete a team.",
+    body: "Forty-four matches from Tōkon's first five tournaments, cut from five event streams each running well over an hour. Eighteen come from a beta bracket published eleven days before the game shipped, filed under Pre-release so you can leave them out. All 88 sides arrive with their four fighters already named, so none of these needed the footage read to complete a team.",
   },
   {
     // engine v0.11.0 (character band) + v0.12.0 (Combos nav item, leaving-site
@@ -180,11 +201,37 @@ export const CHANGELOG: ChangelogEntry[] = [
     // mechanism sentence an earlier draft carried is gone: the Tekken row two
     // above already teaches it, and the rule forbids a sentence that would
     // survive being deleted.
+    //
+    // MATCHES, NOT SETS — amended 2026-08-31, and this row is the one where the
+    // evidence pointed BOTH WAYS, so both halves are recorded rather than the
+    // deciding one alone.
+    //
+    // FOR "sets": the gap analysis this row was audited on. Consecutive records
+    // inside one VOD are never close together — the minimum gap across all 824
+    // shared-VOD pairs is 223s and the median is 583s — and that was read as
+    // set-level segmentation, because games inside a set follow each other
+    // quickly and sets do not.
+    //
+    // FOR "matches", and this is what carried it. (a) The catalogue's own API
+    // field is `matches`. (b) Both games where the counter-pick test HAS power
+    // came back matches: SF6 1.8% vs 21.0% for its Evo sets, Tekken 2.5% vs
+    // 22.2%. (c) The gap analysis does not survive being applied to them. SF6's
+    // minimum gap is 74s with 42 of its 979 pairs under 180s, and SF6 is PROVEN
+    // matches — so a large minimum gap is not evidence of sets. It is evidence
+    // of downtime, which is what a bracket stream is mostly made of, and
+    // scripts/fetch-theater.ts says so in as many words: "the gap to the next
+    // set includes the downtime between them."
+    //
+    // WHAT IS NOT KNOWN, plainly: the counter-pick test cannot be run here at
+    // all. The catalogue caps a 2XKO side at two champions, so a within-set
+    // switch is unrepresentable and the 0 of 888 is a schema fact, not a
+    // measurement. This row is amended on (a) and (b), with (c) removing the
+    // only reason to hold out — not on a test of its own data.
     date: '2026-08-28',
     scope: '2xko',
     kind: 'data',
-    title: '888 tournament sets, cut from the streams',
-    body: '888 tournament sets join 2XKO, cut from 64 streams that each run an hour or more, across 63 brackets and reaching back to September 2025.',
+    title: '888 tournament matches, cut from the streams',
+    body: '888 tournament matches join 2XKO, cut from 64 streams that each run an hour or more, across 63 brackets and reaching back to September 2025.',
   },
   {
     // shell 46aaba9 (the page), e5b5c71 (the selector's "What's new" link),
