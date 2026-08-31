@@ -80,6 +80,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    // sf6 5621bda "data: 1,065 tournament matches from 77 brackets, via the
+    // Replay Theater index". Counts frozen from that repo's data/videos.json the
+    // same day: 1,065 records carrying a videoId, 86 distinct videoIds, 77 distinct
+    // event tags, 2023-06-12 to 2026-04-13. Seasons S1 851 / S2 205 / S3 9 /
+    // S4 none, so "nearly all" is 1,056 of 1,065 and the current-patch claim is
+    // exact rather than rounded: patch 2.0401 holds zero of them.
+    // NOT "weeklies", which the Tekken row two below can say and this one
+    // cannot: the tags are numbered instalments (Cobra Kai #1..#27, Bloodsport
+    // #1..#17) and nothing in the data states a cadence. "Recurring series" is
+    // what the tags actually prove. The instalment counts are the TAG counts,
+    // 25 and 14, not the highest number in each series — several numbers are
+    // missing from the catalogue and an earlier draft said 27 and 17.
+    // The 1,044 is the frozen share that shares a VOD; 17 videos hold a single
+    // record at offset 0 where the record is the whole upload, and 4 more hold a
+    // single record at an offset. The Tournament group's new total is
+    // deliberately absent: it grows.
+    // NOT "sets", which every sibling row says and this one must not. A set is
+    // several games with counter-picks between them, and the data separates the
+    // two cleanly: 1.8% of these records show a side changing character, against
+    // 21.0% of the 81 Evo SETS already in this archive. Twelve times the rate.
+    // The catalogue's own API calls them matches, and so does this.
+    // "77 brackets" is the tag count. Four of the 77 are phases of another
+    // (CEOtaku Pools and Top 16, and two more), so 73 are distinct events; the
+    // looser word is the one the 2XKO row already uses for the same shape.
+    date: '2026-08-31',
+    scope: 'sf6',
+    kind: 'data',
+    title: '1,065 tournament matches, cut from the streams',
+    body: '1,065 tournament matches arrive in SF6 from 77 brackets, nearly all of them Season 1 and Season 2 footage running from June 2023 to April 2026, so a current-patch filter leaves them out. Two recurring series carry most of it, Cobra Kai and Bloodsport between them holding 683 across 39 instalments, with LVL UP EXPO and CEOtaku behind them. Most are a moment inside a longer stream rather than an upload of its own (1,044 of the 1,065), so opening one starts the video at that set instead of at the top of the bracket.',
+  },
+  {
     // tekken ace0d3b "data: 317 tournament sets from 26 events, via the Replay
     // Theater index", merged to main and confirmed by that repo's
     // verify:deployed on 2026-08-30. Counts frozen from data/videos.json the
@@ -100,7 +131,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'tekken',
     kind: 'data',
     title: '317 tournament sets for Tekken',
-    body: "317 tournament sets join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that set instead of at the top of the bracket.",
+    body: '317 tournament sets join Tekken, all of them Season 1: twelve ParagOnline weeklies carry 224, with CEOtaku and a dozen smaller brackets behind them, running February 2024 to March 2025. Most are a moment inside a longer video rather than an upload of its own (285 of the 317), so opening one starts the video at that set instead of at the top of the bracket.',
   },
   {
     // tokon ffb6169 "data: 44 tournament sets from 5 events, via the Replay
@@ -163,7 +194,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     scope: 'shell',
     kind: 'feature',
     title: "The changelog you're reading",
-    body: "Every change a visitor can see now gets a dated entry here, newest first, going back to the day the 2XKO Replay Database opened. The entries are written by hand rather than pulled from commit messages, so this page carries what you can see or do differently, not every change to the pipelines behind it. The front door shows the date of the newest one, so you can tell at a glance whether anything has moved.",
+    body: 'Every change a visitor can see now gets a dated entry here, newest first, going back to the day the 2XKO Replay Database opened. The entries are written by hand rather than pulled from commit messages, so this page carries what you can see or do differently, not every change to the pipelines behind it. The front door shows the date of the newest one, so you can tell at a glance whether anything has moved.',
   },
   {
     // tokon cc010f1 (footage completion, 08-17), 58836f3 (mid-set team changes),
