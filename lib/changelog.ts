@@ -300,13 +300,16 @@ export const CHANGELOG: ChangelogEntry[] = [
     body: '2XKO Pro Replays rebranded and unlisted its entire 2XKO back catalogue, a quarter of the archive at the time. Those 1,317 matches stay put: the archive keeps what channels take down, so the next refresh cannot quietly rebuild the database without them. Some of those videos have since vanished entirely (in a spot check, 4 of 150 were already gone), which is exactly why the records, the players, and every stat built from them survive either way.',
   },
   {
-    // tekken b4db6ca — 63 sets, 63/63 both-sides-exact, 13/13 counter-picked
+    // tekken b4db6ca — 63 sets, 63/63 both-sides-exact, 14/14 counter-picked
+    // (was written as 13/13 and corrected 2026-09-01: the measured value is 14,
+    // in the corpus and in cache/evo/ground-truth.json alike, and it was never
+    // 13 — checked back to this row's own origin commit)
     // sides, and the 37.7% (23/61) title-order defect that forced HUD reads.
     date: '2026-08-07',
     scope: 'tekken',
     kind: 'data',
     title: 'Evo footage for Tekken 8',
-    body: "Sixty-three Evo sets join Tekken, with characters and sides read from the broadcast rather than the video title. That matters more here than anywhere else: on Tekken's Evo uploads, the title names the two players in the wrong order 37.7% of the time. Who played what comes from the on-screen HUD, never from the title. All 13 sets where a player counter-picked mid-set show both characters they used.",
+    body: "Sixty-three Evo sets join Tekken, with characters and sides read from the broadcast rather than the video title. That matters more here than anywhere else: on Tekken's Evo uploads, the title names the two players in the wrong order 37.7% of the time. Who played what comes from the on-screen HUD, never from the title. All 14 sets where a player counter-picked mid-set show both characters they used.",
   },
   {
     // sf6 d544fe0 (81 sets / 8 events / 17 counter-picks), ce23976 (a side
