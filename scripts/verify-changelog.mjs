@@ -18,7 +18,7 @@ import { CHANGELOG } from '../lib/changelog.ts';
  * failure mode the engine calls "a gate that cannot run is worse than no gate".
  */
 
-const SCOPES = ['platform', 'engine', 'shell', '2xko', 'tekken', 'sf6', 'tokon'];
+const SCOPES = ['platform', 'engine', 'shell', '2xko', 'tekken', 'sf6', 'tokon', 'ffcotw'];
 const KINDS = ['launch', 'feature', 'data', 'improvement'];
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const TITLE_MAX = 60;

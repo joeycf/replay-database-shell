@@ -57,6 +57,13 @@
       <!-- One card per game. Each is a full-page navigation (<a>, not NuxtLink)
            so the click hits the edge rewrite (vercel.json), never the SPA
            router — /2xko and /tekken are not routes in this app. -->
+      <!-- TWO COLUMNS, AND A THIRD WAS TRIED AND REJECTED when the fifth game
+           shipped. Five cards at two columns leave the last one alone on a
+           half-width row, which is the obvious reason to reach for
+           lg:grid-cols-3 — but at three columns the card narrows from 514px to
+           333px and every game's tagline truncates ("Champion usage · team
+           pairing…"), measured at 1440. Degrading four shipped cards to tidy
+           the fifth is the wrong trade. The odd-count gap stays. -->
       <section
         aria-label="Games"
         class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24"

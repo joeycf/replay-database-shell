@@ -96,6 +96,14 @@ const SUMMARIES = {
     characters: 21,
     updated: '2026-07-26',
   },
+  ffcotw: {
+    game: 'ffcotw',
+    name: 'FATAL FURY: City of the Wolves',
+    replays: 50000000,
+    players: 500,
+    characters: 30,
+    updated: '2026-09-03',
+  },
 };
 /**
  * The changelog, as lib/changelog.ts declares it. Restated rather than imported
@@ -103,9 +111,12 @@ const SUMMARIES = {
  * trade verify-cutover.mjs makes for GAMES. Restating it IS the drift gate:
  * these three constants and the built page must agree.
  */
-const CHANGELOG_ENTRIES = 31;
-const CHANGELOG_NEWEST = '2026-08-31';
-const CHANGELOG_NEWEST_TEXT = '31 Aug';
+// Derived from the table the page itself renders, so adding a game updates the
+// gate and the page together rather than leaving a literal to go stale.
+const GAME_COUNT = Object.keys(SUMMARIES).length;
+const CHANGELOG_ENTRIES = 32;
+const CHANGELOG_NEWEST = '2026-09-03';
+const CHANGELOG_NEWEST_TEXT = '3 Sep';
 
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
@@ -222,11 +233,12 @@ try {
       artLoaded: a.querySelector('img')?.naturalWidth > 0,
     })),
   );
-  check(`4 game cards render`, cards.length === 4, JSON.stringify(cards));
+  check(`5 game cards render`, cards.length === 5, JSON.stringify(cards));
   const two = cards.find((c) => c.href === '/2xko');
   const tek = cards.find((c) => c.href === '/tekken');
   const sf6 = cards.find((c) => c.href === '/sf6');
   const tok = cards.find((c) => c.href === '/tokon');
+  const cotw = cards.find((c) => c.href === '/ffcotw');
   check(
     `2XKO card: href=/2xko, accent #ff2e88, art loads`,
     !!two && two.accent === '#ff2e88' && two.name === '2XKO' && two.artLoaded,
@@ -243,6 +255,10 @@ try {
     `Tōkon card: href=/tokon, accent #03a5fe, art loads`,
     !!tok && tok.accent === '#03a5fe' && tok.name === 'MARVEL Tōkon' && tok.artLoaded,
   );
+  check(
+    `CotW card: href=/ffcotw, accent #ffd21f, art loads`,
+    !!cotw && cotw.accent === '#ffd21f' && cotw.name === 'FATAL FURY: CotW' && cotw.artLoaded,
+  );
 
   // The card-count selector above is ANCHOR-scoped (`a.game-card`). Assert the
   // CLASS-only selector too: UPCOMING is empty today, but the next announced
@@ -251,8 +267,8 @@ try {
   // shipping something that looks clickable and is not.
   const gameCardClass = await page.evaluate(() => document.querySelectorAll('.game-card').length);
   check(
-    `.game-card is the four LIVE cards and nothing else`,
-    gameCardClass === 4,
+    `.game-card is the five LIVE cards and nothing else`,
+    gameCardClass === 5,
     `${gameCardClass} found`,
   );
 
@@ -304,13 +320,14 @@ try {
   });
   const itemList = jsonLd.find((n) => n['@type'] === 'ItemList');
   check(
-    `ItemList JSON-LD parses with all four games at apex URLs`,
+    `ItemList JSON-LD parses with all five games at apex URLs`,
     !!itemList &&
-      itemList.itemListElement?.length === 4 &&
+      itemList.itemListElement?.length === 5 &&
       itemList.itemListElement[0].url === 'https://replaydatabase.com/2xko' &&
       itemList.itemListElement[1].url === 'https://replaydatabase.com/tekken' &&
       itemList.itemListElement[2].url === 'https://replaydatabase.com/sf6' &&
-      itemList.itemListElement[3].url === 'https://replaydatabase.com/tokon',
+      itemList.itemListElement[3].url === 'https://replaydatabase.com/tokon' &&
+      itemList.itemListElement[4].url === 'https://replaydatabase.com/ffcotw',
     JSON.stringify(itemList),
   );
   // The structural guard against an upcoming game reaching structured data
@@ -325,10 +342,10 @@ try {
   const sitemapIndex = readFileSync(join(STATIC_DIR, 'sitemap.xml'), 'utf8');
   const sitemapChildren = [...sitemapIndex.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   check(
-    `sitemap index lists exactly 4 game children + the page sitemap (${sitemapChildren.length})`,
-    sitemapChildren.length === 5 &&
+    `sitemap index lists exactly 5 game children + the page sitemap (${sitemapChildren.length})`,
+    sitemapChildren.length === 6 &&
       sitemapChildren.includes('https://replaydatabase.com/sitemap-pages.xml') &&
-      ['2xko', 'tekken', 'sf6', 'tokon'].every((s) =>
+      ['2xko', 'tekken', 'sf6', 'tokon', 'ffcotw'].every((s) =>
         sitemapChildren.includes(`https://replaydatabase.com/${s}/sitemap.xml`),
       ),
     sitemapChildren.join(', '),
@@ -385,7 +402,7 @@ try {
       ),
     }));
 
-  await waitForCounts(4).catch(() => {});
+  await waitForCounts(5).catch(() => {});
   const all = await readSelector();
   for (const [slug, s] of Object.entries(SUMMARIES)) {
     const href = `/${slug}`;
@@ -396,8 +413,8 @@ try {
   }
   const allTotal = Object.values(SUMMARIES).reduce((sum, s) => sum + s.replays, 0);
   check(
-    `aggregate sums all four (${JSON.stringify(all.aggregate)})`,
-    all.aggregate === `${fmt(allTotal)} replays across 4 games`,
+    `aggregate sums all five (${JSON.stringify(all.aggregate)})`,
+    all.aggregate === `${fmt(allTotal)} replays across 5 games`,
   );
 
   await page.screenshot({
@@ -433,7 +450,7 @@ try {
   servedSlugs.delete(BLOCKED);
   currentPage = '/ (summary blocked)';
   await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-  await waitForCounts(3).catch(() => {});
+  await waitForCounts(4).catch(() => {});
   const partial = await readSelector();
 
   check(
@@ -442,8 +459,8 @@ try {
   );
   const partialTotal = allTotal - SUMMARIES[BLOCKED].replays;
   check(
-    `aggregate sums only the three that resolved (${JSON.stringify(partial.aggregate)})`,
-    partial.aggregate === `${fmt(partialTotal)} replays across 4 games`,
+    `aggregate sums only the four that resolved (${JSON.stringify(partial.aggregate)})`,
+    partial.aggregate === `${fmt(partialTotal)} replays across 5 games`,
   );
   for (const slug of Object.keys(SUMMARIES).filter((s) => s !== BLOCKED)) {
     check(
@@ -478,7 +495,7 @@ try {
   );
   check(
     `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
-    none.aggregate === '4 games in the archive',
+    none.aggregate === '5 games in the archive',
   );
   check(
     `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(all)})`,
@@ -502,7 +519,7 @@ try {
       currentPage = served ? '/' : '/ (summary blocked)';
       await page.setViewport({ width, height: 900 });
       await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-      if (served) await waitForCounts(4).catch(() => {});
+      if (served) await waitForCounts(5).catch(() => {});
       else await page.waitForNetworkIdle({ idleTime: 500, timeout: 10000 }).catch(() => {});
       states.push(await readSelector());
     }
@@ -515,20 +532,29 @@ try {
   }
   await page.setViewport({ width: 1280, height: 900 });
 
-  // ── 1e. the grid holds four cards in every regime ────────────────────────
+  // ── 1e. the grid regimes ─────────────────────────────────────────────────
   // 380 = 1-up (grid-cols-1), 640 = the sm 2-up boundary (40rem), 1280 = the
-  // max-w-[1120px] 2-up. FOUR cards therefore fill an even 2×2 from sm up. There
-  // is deliberately no lg:grid-cols-3 — commit 5731651 removed it ("max cards to
-  // 2 per row"), and re-adding it would orphan the fourth card on its own row.
-  // Equal widths per row is the "not squeezed" half; equal row heights is what
-  // the upcoming card's reserved .count-slot buys.
+  // max-w-[1120px] 2-up. There is deliberately no lg:grid-cols-3 — commit
+  // 5731651 removed it ("max cards to 2 per row"), and re-adding it narrows the
+  // card from 514px to 333px, which truncates EVERY game's tagline ("Champion
+  // usage · team pairing…", measured at 1440 when the fifth game shipped).
+  //
+  // THIS USED TO ASSERT THAT EVERY ROW IS FULL, which was true of four cards in
+  // a 2-up grid and is arithmetically impossible for five. The invariant that
+  // actually matters is not evenness — it is that no card is a different size
+  // from its peers. So: all cards the same width, every row full EXCEPT
+  // possibly the last, and cards sharing a row level with each other. An odd
+  // game count leaves a gap in the final row and that is a fact about counting,
+  // not a defect; a card that is narrower than its neighbours is a defect.
+  // Equal widths is the "not squeezed" half; equal row heights is what the
+  // upcoming card's reserved .count-slot buys.
   console.log('\n[/] grid regimes');
   const SHOT_DIR = process.env.SHOT_DIR || '/tmp';
   for (const width of [380, 640, 1280]) {
     await page.setViewport({ width, height: 1400 });
     currentPage = `/ (${width}px)`;
     await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-    await waitForCounts(4).catch(() => {});
+    await waitForCounts(5).catch(() => {});
     const grid = await page.evaluate(() => {
       const sec = document.querySelector('section[aria-label="Games"]');
       const kids = [...sec.children];
@@ -548,11 +574,16 @@ try {
       };
     });
     const perRow = width < 640 ? 1 : 2;
+    const expectedCards = GAME_COUNT;
+    const full = grid.perRow.slice(0, -1);
+    const last = grid.perRow[grid.perRow.length - 1];
     check(
-      `${width}px: 4 cards in ${grid.cols} col(s), rows ${JSON.stringify(grid.perRow)}, widths ${JSON.stringify(grid.widths)} — no orphan, none squeezed`,
-      grid.children === 4 &&
+      `${width}px: ${expectedCards} cards in ${grid.cols} col(s), rows ${JSON.stringify(grid.perRow)}, widths ${JSON.stringify(grid.widths)} — none squeezed, only the last row short`,
+      grid.children === expectedCards &&
         grid.cols === perRow &&
-        grid.perRow.every((n) => n === perRow) &&
+        full.every((n) => n === perRow) &&
+        last >= 1 &&
+        last <= perRow &&
         new Set(grid.widths).size === 1,
       JSON.stringify(grid),
     );
@@ -645,8 +676,8 @@ try {
     `first entry's date renders as its authored day, not UTC-shifted (${log.firstDate} → ${JSON.stringify(log.firstDateText)})`,
     log.firstDate === CHANGELOG_NEWEST && log.firstDateText === CHANGELOG_NEWEST_TEXT,
   );
-  // One badge per entry, and the palette is the four game accents plus the
-  // umbrella teal for the platform-wide scopes — five distinct colors. Fewer
+  // One badge per entry, and the palette is the FIVE game accents plus the
+  // umbrella teal for the platform-wide scopes — six distinct colors. Fewer
   // means a scope silently fell through to the fallback (the tekken8-vs-tekken
   // trap: lib/games.ts keys on `id`, the changelog on `slug`).
   check(
@@ -655,8 +686,8 @@ try {
   );
   const distinctBadges = new Set(log.badgeColors);
   check(
-    `badges use all 4 game accents + the umbrella teal (${distinctBadges.size} distinct)`,
-    distinctBadges.size === 5,
+    `badges use all 5 game accents + the umbrella teal (${distinctBadges.size} distinct)`,
+    distinctBadges.size === 6,
     [...distinctBadges].join(', '),
   );
   // The selector's ItemList must not follow us here, and nothing on this page

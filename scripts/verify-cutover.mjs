@@ -69,6 +69,17 @@ const GAMES = [
     // null charPath here would silently never find a character page.
     charPath: '/tokon/fighters/captain-america',
   },
+  {
+    slug: 'ffcotw',
+    id: 'ffcotw',
+    // The FULL title, compared against summary.json's `name`. The selector card
+    // uses the short 'FATAL FURY: CotW'.
+    name: 'FATAL FURY: City of the Wolves',
+    primary: '#ffd21f',
+    // This game keeps the engine's default 'characters' segment — its own
+    // vocabulary already matches the engine's, so there was nothing to override.
+    charPath: '/ffcotw/characters/terry-bogard',
+  },
 ];
 
 // UPCOMING is empty in lib/games.ts since MARVEL Tōkon shipped on 2026-08-14,
@@ -288,11 +299,12 @@ try {
   }));
   check(`selector wears the umbrella teal (${sel.primary})`, sel.primary === '#17cfc8');
   check(
-    `cards link /2xko + /tekken + /sf6 + /tokon`,
+    `cards link /2xko + /tekken + /sf6 + /tokon + /ffcotw`,
     sel.cards.includes('/2xko') &&
       sel.cards.includes('/tekken') &&
       sel.cards.includes('/sf6') &&
-      sel.cards.includes('/tokon'),
+      sel.cards.includes('/tokon') &&
+      sel.cards.includes('/ffcotw'),
   );
   check(
     `4 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,

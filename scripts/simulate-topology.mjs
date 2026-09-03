@@ -34,6 +34,10 @@ const GAME_DIRS = {
   ),
   'sf6-replay-database.vercel.app': join(ROOT, '../sf6-replay-database/.vercel/output/static'),
   'tokon-replay-database.vercel.app': join(ROOT, '../tokon-replay-database/.vercel/output/static'),
+  'ffcotw-replay-database.vercel.app': join(
+    ROOT,
+    '../ffcotw-replay-database/.vercel/output/static',
+  ),
 };
 const CONFIG = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
 

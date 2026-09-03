@@ -57,7 +57,8 @@
  *  ShellGame.slug in lib/games.ts (NOT .id — Tekken's id is 'tekken8'), which
  *  is how the page finds each badge's accent. 'platform' is a change all games
  *  got at once; 'engine' and 'shell' are the shared layer and the apex. */
-export type Scope = 'platform' | 'engine' | 'shell' | '2xko' | 'tekken' | 'sf6' | 'tokon';
+export type Scope =
+  'platform' | 'engine' | 'shell' | '2xko' | 'tekken' | 'sf6' | 'tokon' | 'ffcotw';
 
 /** launch = a game or the platform itself going live · feature = something new
  *  to use · data = matches or fields arriving · improvement = something that
@@ -79,6 +80,25 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    // ffcotw-replay-database, launch. Numbers frozen from that repo's
+    // data/videos.json on 2026-09-03: 4,481 published records, of which 127
+    // carry a startSeconds and an event tag (the Replay Theater tagged arm).
+    // Earliest record 2025-02-22, inside Open Beta Test 1; the Beta era runs to
+    // Early Access on 2025-04-21.
+    // "matches", not "sets", for the same reason the SF6 row says it: this
+    // catalogue's own API calls them matches, and exactly one entry in 3,465
+    // uses a second character column, so a counter-pick is the rare case here
+    // rather than the norm.
+    // The fighter count is deliberately absent: Kim Kaphwan and Laocorn are
+    // announced for September and November, so any roster number goes stale
+    // inside a month. The record count is a frozen launch delta and does not.
+    date: '2026-09-03',
+    scope: 'ffcotw',
+    kind: 'launch',
+    title: 'FATAL FURY: City of the Wolves joins the archive',
+    body: 'FATAL FURY: City of the Wolves joins Replay Database with 4,481 matches, running from the February 2025 open beta through Season 3. 127 of them are tournament matches cut from event streams, so opening one starts the video at that match rather than at the top of the bracket. Beta and early access footage is filed under its own era, so a current-patch filter leaves it out.',
+  },
   {
     // sf6 5621bda "data: 1,065 tournament matches from 77 brackets, via the
     // Replay Theater index". Counts frozen from that repo's data/videos.json the

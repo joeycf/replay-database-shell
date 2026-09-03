@@ -115,6 +115,35 @@ export const GAMES: ShellGame[] = [
     sitemapUrl: `${SITE_URL}/tokon/sitemap.xml`,
     summaryUrl: '/tokon/data/summary.json',
   },
+  {
+    // Game #5, appended per the note above. It never passed through UPCOMING:
+    // that array has been empty since Tōkon shipped, so this is a plain append
+    // rather than a promotion, and there is no coming-soon card to retire.
+    id: 'ffcotw',
+    // The short form the game is actually called. The full title
+    // "FATAL FURY: City of the Wolves" is longer than any sibling's and wraps
+    // in the card's title column; it lives in the card art and the image alt
+    // instead, exactly as MARVEL Tōkon's does.
+    // NOTE: verify-cutover.mjs must use the FULL title in its own table — it
+    // asserts against summary.json, which the game emits with the full name.
+    name: 'FATAL FURY: CotW',
+    shortName: 'COTW',
+    slug: 'ffcotw',
+    url: '/ffcotw',
+    // The game's theme.css --color-primary. Yellow rather than the sampled
+    // FATAL FURY red, by the skin's own collision lever: that red is 11° of hue
+    // from Tekken's #e13048 and would be indistinguishable from it at chip size.
+    accent: '#ffd21f',
+    // A byte-copy of the game repo's own public/og-default.png, which is how
+    // 2XKO, Tekken and SF6's cards were made. Tōkon needed a bespoke generator
+    // only because it had no game repo at the time; this one does.
+    art: '/img/games/ffcotw.png',
+    // No hover-loop video yet. `video` is optional by design — a game without
+    // one simply shows its static key art.
+    tagline: 'Character usage · matchups · meta over time',
+    sitemapUrl: `${SITE_URL}/ffcotw/sitemap.xml`,
+    summaryUrl: '/ffcotw/data/summary.json',
+  },
 ];
 
 /**

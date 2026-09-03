@@ -170,6 +170,10 @@
       "destination": "https://tokon-replay-database.vercel.app/_vercel/insights/:path*"
     },
     {
+      "source": "/ffcotw-insights/:path*",
+      "destination": "https://ffcotw-replay-database.vercel.app/_vercel/insights/:path*"
+    },
+    {
       "source": "/2xko",
       "destination": "https://2xko-replay-database.vercel.app/2xko"
     },
@@ -200,6 +204,14 @@
     {
       "source": "/tokon/:path*",
       "destination": "https://tokon-replay-database.vercel.app/tokon/:path*"
+    },
+    {
+      "source": "/ffcotw",
+      "destination": "https://ffcotw-replay-database.vercel.app/ffcotw"
+    },
+    {
+      "source": "/ffcotw/:path*",
+      "destination": "https://ffcotw-replay-database.vercel.app/ffcotw/:path*"
     }
   ]
 }
