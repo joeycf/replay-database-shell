@@ -81,6 +81,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    // shell, this commit — UPCOMING returns with three entries after six weeks
+    // empty (Tōkon's promotion emptied it on 2026-08-14).
+    // scope 'platform' rather than the 'shell' the Tōkon announcement used:
+    // that row was about one card and the mechanism behind it, this one is
+    // about three games. Either renders the umbrella teal badge, so the
+    // distinct-badge gate is unmoved.
+    // Titles verified against the vendors' own pages, not memory:
+    // guiltygear.com/ggst/en/ (© ARC SYSTEM WORKS),
+    // rising.granbluefantasy.jp/en/about (© Cygames, Inc. Developed by ARC
+    // SYSTEM WORKS), and for Avatar Legends the three official surfaces that
+    // disagree on its studio credits — see the entry comment in lib/games.ts.
+    // NO DATES AND NO ORDER, deliberately, and the body says why out loud so
+    // the next person does not add them back. The three cards are announcements
+    // with no pipeline behind them yet; a card that sits for months is fine,
+    // and a missed date on the front door is not. Same reasoning as the Tōkon
+    // row, which shipped six weeks after its own game's release date and would
+    // have been wrong on day one had it named it.
+    // No frozen counts here on purpose: there is nothing counted yet. The one
+    // number a reader might want — how many games the archive holds — is on the
+    // selector already and grows on its own.
+    date: '2026-09-04',
+    scope: 'platform',
+    kind: 'feature',
+    title: 'Three more games are on the way',
+    body: 'Guilty Gear Strive, Avatar Legends: The Fighting Game and Granblue Fantasy Versus: Rising join the front door as announced games. None of the three is a link and none carries a replay count: there is nothing to browse yet, and saying so plainly beats a card that looks broken. No dates and no running order are attached, because this page redeploys only when the shell changes and a promise baked into it would go stale while nobody is looking.',
+  },
+  {
     // ffcotw-replay-database, launch. Numbers frozen from that repo's
     // data/videos.json on 2026-09-03: 4,481 published records, of which 127
     // carry a startSeconds and an event tag (the Replay Theater tagged arm).

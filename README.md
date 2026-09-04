@@ -98,17 +98,18 @@ and there is no `NUXT_APP_BASE_URL` dance here — that's a game-app concern.
 
 ## Scripts
 
-| script                                           | what it does                                                                      |
-| ------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `npm run dev` / `build` / `generate` / `preview` | Nuxt app (generate = full static build)                                           |
-| `npm run typecheck`                              | `nuxt prepare` + `nuxt typecheck` (vue-tsc)                                       |
-| `npm run lint` / `lint:fix`                      | ESLint over the whole repo                                                        |
-| `npm run format` / `format:check`                | Prettier                                                                          |
-| `npm run verify:changelog`                       | Schema gate on `lib/changelog.ts` — dates, scopes, kinds, ordering                |
-| `npm run verify:shell`                           | Headless gates on the **built** output — selector, theme, JSON-LD, `/health`, 404 |
-| `npm run verify:cutover <host>`                  | The post-cutover battery against a **live** host (defaults to replaydatabase.com) |
-| `node scripts/simulate-topology.mjs`             | Serve the built shell behind a faithful local implementation of `vercel.json`     |
-| `node scripts/card-art-tokon.mjs`                | One-off: regenerate the Tōkon coming-soon card art. Not wired into the build      |
+| script                                           | what it does                                                                       |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `npm run dev` / `build` / `generate` / `preview` | Nuxt app (generate = full static build)                                            |
+| `npm run typecheck`                              | `nuxt prepare` + `nuxt typecheck` (vue-tsc)                                        |
+| `npm run lint` / `lint:fix`                      | ESLint over the whole repo                                                         |
+| `npm run format` / `format:check`                | Prettier                                                                           |
+| `npm run verify:changelog`                       | Schema gate on `lib/changelog.ts` — dates, scopes, kinds, ordering                 |
+| `npm run verify:shell`                           | Headless gates on the **built** output — selector, theme, JSON-LD, `/health`, 404  |
+| `npm run verify:cutover <host>`                  | The post-cutover battery against a **live** host (defaults to replaydatabase.com)  |
+| `node scripts/simulate-topology.mjs`             | Serve the built shell behind a faithful local implementation of `vercel.json`      |
+| `node scripts/card-art-tokon.mjs`                | One-off: the Tōkon coming-soon card art, kept as its provenance. Not in the build  |
+| `node scripts/card-art-upcoming.mjs [slug…]`     | Card art for the `UPCOMING` games (all three by default). Not wired into the build |
 
 ## Verification
 
@@ -213,16 +214,19 @@ checking that limit first.
 7. **Add the changelog entry in the same commit** — a new game is always worth
    one. See "Maintaining the changelog" below for what an entry says.
 
-## Adding an upcoming game (a "Coming Soon" card)
+## Adding upcoming games (the "Coming Soon" cards)
 
 A game that has been announced but has no replays yet goes in **`UPCOMING`**, not
 `GAMES`:
 
-1. Add the entry to `UPCOMING` in `lib/games.ts`: `id`, `name`, `shortName`,
-   `slug`, `accent`, `art`, `tagline`. That type has **no** `url`, `sitemapUrl`
-   or `summaryUrl` — the fields don't exist, so the entry cannot reach the
-   `ItemList` JSON-LD or the sitemap index even by accident. The card grid is its
-   only consumer.
+1. Add the entry to `UPCOMING` in `lib/games.ts`: `id`, `name`, `fullName`,
+   `shortName`, `slug`, `accent`, `art`, `tagline`. That type has **no** `url`,
+   `sitemapUrl` or `summaryUrl` — the fields don't exist, so the entry cannot
+   reach the `ItemList` JSON-LD or the sitemap index even by accident. The card
+   grid is its only consumer. `name` is the SHORT display form (the title column
+   wraps otherwise, and a wrapped title makes its grid row taller than the row
+   above); `fullName` is the full official title, and it is what the image alt
+   and the card art carry.
 2. Drop 1200×630 key art at `public/img/games/<slug>.png`. No hover video — the
    card is not interactive.
 3. **Nothing else.** No `vercel.json` rewrite (there is no deployment to proxy
@@ -230,13 +234,26 @@ A game that has been announced but has no replays yet goes in **`UPCOMING`**, no
 4. The tagline describes the game and **never carries a release date**. This repo
    redeploys only when the shell changes, so a date baked into static HTML goes
    stale unattended while "Coming Soon" stays true.
-5. `npm run generate && npm run verify:shell` — the gates assert the ItemList
-   still has exactly 4 entries, the sitemap index exactly 4 game children, and
-   that the card has no `href` and is not inside an `<a>`.
+5. **The accent has to clear every shipped accent, and the other upcoming ones.**
+   The rule the game skins use: OKLCH Δhue ≥ 25, or Δhue ≥ 10 with |ΔL| ≥ .12,
+   and at least AA on the card ground (Tekken's `#e13048` is the floor at
+   4.50:1 — the badge sets 11px text in this colour). Occupied hues today:
+   2XKO 2 · Tekken 20 · SF6 52 · Strive 82 · CotW 93 · umbrella teal 190 ·
+   Tōkon 244 · Granblue 272 · Avatar 284. FATAL FURY and Strive both demoted
+   their own sampled reds for landing ~11° from Tekken; assume the obvious
+   sample is taken and check before committing to it.
+6. `npm run generate && npm run verify:shell` — the gates assert one `ItemList`
+   entry per LIVE game and one sitemap child per live game plus the page
+   sitemap (an upcoming game adds to neither), that every upcoming card has no
+   `href`, is not inside an `<a>` and is not focusable, and that each card's
+   image alt names its own game rather than a sibling's.
 
-Art for a game with no repo is generated in-repo: `node scripts/card-art-tokon.mjs`
-is the one-off that produced `tokon.png` and is the only record of how. Deliberately
-not wired into the build — `npm run generate` must not need Chrome.
+Art for a game with no repo is generated in-repo:
+`node scripts/card-art-upcoming.mjs [slug…]` renders the coming-soon cards from
+one parameterized registry. `scripts/card-art-tokon.mjs` is the original of that
+pattern and stays as the only record of how the shipped `tokon.png` was made
+before that game had a repo. Both are deliberately not wired into the build —
+`npm run generate` must not need Chrome.
 
 **Promotion at launch is a move, not a copy:** when the pipeline ships, the entry
 leaves `UPCOMING`, joins `GAMES` (appending), gains the three URL fields, and

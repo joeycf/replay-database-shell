@@ -8,8 +8,8 @@ import puppeteer from 'puppeteer-core';
  *
  * Gates:
  *   1. / = the selector, umbrella-themed (#17cfc8), valid ItemList JSON-LD, and
- *      the coming-soon card present but non-navigable — announced, never claimed
- *      in structured data or the sitemap, and /<slug> still a 404.
+ *      the coming-soon cards present but non-navigable — announced, never
+ *      claimed in structured data or the sitemap, and each /<slug> still a 404.
  *   2. Every legacy 2XKO apex URL shape 30x → target → 200: /champions/ekko,
  *      a real /players/<id> (sampled from the game sitemap), /stats,
  *      /?fuse=juggernaut (filters!), /?v=<id> (modal opens).
@@ -82,11 +82,19 @@ const GAMES = [
   },
 ];
 
-// UPCOMING is empty in lib/games.ts since MARVEL Tōkon shipped on 2026-08-14,
-// so there is no coming-soon card to assert against here. When a game is next
-// announced, restore the const and its selector gates: the card must render and
-// be non-navigable, /<slug> must 404, and the slug must appear in neither the
-// ItemList nor the sitemap index.
+/**
+ * The coming-soon cards. Deliberately NOT in GAMES: that array drives the
+ * summary.json, rewrite, theme and canonical loops, none of which exist for a
+ * game with no deployment. Mirrors UPCOMING in lib/games.ts, whose type has no
+ * url/sitemapUrl/summaryUrl at all — which is what keeps these out of the
+ * ItemList and the sitemap index. Used only by the selector checks.
+ * ORDER MATTERS: the cards are asserted positionally against this.
+ */
+const UPCOMING = [
+  { slug: 'ggst', name: 'Guilty Gear Strive' },
+  { slug: 'avatar', name: 'Avatar Legends' },
+  { slug: 'gbvsr', name: 'Granblue Rising' },
+];
 
 /** Web Analytics proxy prefix per game — each is one rewrite in this repo's
  *  vercel.json AND one `observability.insights` in that game's app.config.ts.
@@ -146,6 +154,7 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     '/tekken/sitemap.xml',
     '/sf6/sitemap.xml',
     '/tokon/sitemap.xml',
+    '/ffcotw/sitemap.xml',
   ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
@@ -159,6 +168,34 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     idxGames.length === GAMES.length,
     idxGames.join(', '),
   );
+  check(
+    `  no coming-soon game in the sitemap index`,
+    !UPCOMING.some((u) => new RegExp(u.slug, 'i').test(index)),
+    idxLocs.join(', '),
+  );
+
+  // There is no deployment, no vercel.json rewrite and nothing linking there.
+  for (const u of UPCOMING) {
+    const soonRes = await fetch(`${HOST}/${u.slug}`, { redirect: 'manual' });
+    check(
+      `/${u.slug} does not resolve (${soonRes.status}) — announced, not routed`,
+      soonRes.status === 404,
+    );
+  }
+
+  // Straight off the wire: the announcement needs neither hover nor JavaScript.
+  const servedHome = await (await fetch(`${HOST}/`)).text();
+  check(
+    `"Coming Soon" appears ${UPCOMING.length}× in the SERVED html`,
+    (servedHome.match(/Coming Soon/g) ?? []).length === UPCOMING.length,
+    `${(servedHome.match(/Coming Soon/g) ?? []).length} found`,
+  );
+  for (const u of UPCOMING) {
+    check(
+      `served html has no /${u.slug} link`,
+      !new RegExp(`href="[^"]*/${u.slug}`).test(servedHome),
+    );
+  }
   for (const { slug } of GAMES) {
     const res = await fetch(`${HOST}/${slug}/sitemap.xml`);
     const ok = res.status === 200;
@@ -285,7 +322,21 @@ try {
     // Class-only as well as anchor-scoped: if the upcoming card ever adopts
     // .game-card it inherits the hover-lift and starts looking clickable.
     gameCardClass: document.querySelectorAll('.game-card').length,
-    upcomingCount: document.querySelectorAll('.upcoming-card').length,
+    upcoming: [...document.querySelectorAll('.upcoming-card')].map((el) => {
+      const badge = el.querySelector('.badge');
+      return {
+        tag: el.tagName,
+        href: el.getAttribute('href'),
+        insideAnchor: el.closest('a') !== null,
+        anchorsInside: el.querySelectorAll('a[href]').length,
+        tabindex: el.getAttribute('tabindex'),
+        badge: badge?.textContent.trim() ?? null,
+        badgeVisible: !!badge && getComputedStyle(badge).opacity === '1',
+        name: el.querySelector('.font-display')?.textContent.trim() ?? null,
+        alt: el.querySelector('img')?.getAttribute('alt') ?? null,
+        artLoaded: el.querySelector('img')?.naturalWidth > 0,
+      };
+    }),
     itemList: (() => {
       try {
         const nodes = [...document.querySelectorAll('script[type="application/ld+json"]')].map(
@@ -312,10 +363,33 @@ try {
     JSON.stringify(sel.cards),
   );
   check(`ItemList JSON-LD parses with 5 games`, sel.itemList === 5);
-  // UPCOMING is empty since MARVEL Tōkon shipped; restore the non-navigable
-  // card gates (no href, not inside an <a>, no focus stop, badge visible
-  // without hover) when a game is next announced.
-  check(`no upcoming card on the apex (UPCOMING is empty)`, sel.upcomingCount === 0);
+  check(
+    `${UPCOMING.length} upcoming cards on the apex`,
+    sel.upcoming.length === UPCOMING.length,
+    JSON.stringify(sel.upcoming),
+  );
+  UPCOMING.forEach((want, i) => {
+    const u = sel.upcoming[i];
+    check(
+      `upcoming[${i}] ${want.name}: non-navigable — no href, not inside an <a>, no focus stop, badge visible without hover, art loaded`,
+      !!u &&
+        u.tag !== 'A' &&
+        u.href === null &&
+        u.insideAnchor === false &&
+        u.anchorsInside === 0 &&
+        u.tabindex === null &&
+        u.badge === 'Coming Soon' &&
+        u.badgeVisible === true &&
+        u.name === want.name &&
+        u.artLoaded,
+      JSON.stringify(u),
+    );
+  });
+  check(
+    `the coming-soon alts are distinct (${new Set(sel.upcoming.map((u) => u.alt)).size} for ${sel.upcoming.length} cards)`,
+    new Set(sel.upcoming.map((u) => u.alt)).size === sel.upcoming.length,
+    sel.upcoming.map((u) => u.alt).join(' | '),
+  );
 
   // ── /changelog through the shell host ──
   console.log('\n[/changelog]');
@@ -486,7 +560,7 @@ try {
     0,
   );
   check(
-    `aggregate sums only the three that resolved (${JSON.stringify(partial.aggregate)} ≈ ${remaining}, < ${liveTotal})`,
+    `aggregate sums only the ${GAMES.length - 1} that resolved (${JSON.stringify(partial.aggregate)} ≈ ${remaining}, < ${liveTotal})`,
     within(num(partial.aggregate), remaining) && num(partial.aggregate) < liveTotal,
   );
   check(

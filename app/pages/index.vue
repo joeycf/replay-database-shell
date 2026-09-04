@@ -58,12 +58,13 @@
            so the click hits the edge rewrite (vercel.json), never the SPA
            router — /2xko and /tekken are not routes in this app. -->
       <!-- TWO COLUMNS, AND A THIRD WAS TRIED AND REJECTED when the fifth game
-           shipped. Five cards at two columns leave the last one alone on a
-           half-width row, which is the obvious reason to reach for
-           lg:grid-cols-3 — but at three columns the card narrows from 514px to
-           333px and every game's tagline truncates ("Champion usage · team
-           pairing…"), measured at 1440. Degrading four shipped cards to tidy
-           the fifth is the wrong trade. The odd-count gap stays. -->
+           shipped: at three columns the card narrows from 514px to 333px and
+           every game's tagline truncates ("Champion usage · team pairing…"),
+           measured at 1440. That measurement is why the cap stays even now that
+           the count is even — five live cards plus three announced fill four
+           full rows of two, and the half-width gap comes back the moment the
+           total goes odd again. A gap is counting; a squeezed card is a
+           defect. -->
       <section
         aria-label="Games"
         class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24"
@@ -144,7 +145,12 @@
              focus stop that does nothing is a keyboard/screen-reader dead end.
              The affordance is therefore the PERSISTENT badge — always rendered,
              always in the accessibility tree — not a hover reveal, which would
-             leave the card looking simply broken on touch. -->
+             leave the card looking simply broken on touch.
+             NEW SINCE TŌKON: with an odd LIVE count and three announced games,
+             the 2-up grid pairs the last live card with the first upcoming one
+             in row 3. That row has to sit level with a card that renders a
+             replay count against one that never will, which is exactly what the
+             reserved .count-slot below buys. -->
         <article
           v-for="u in upcoming"
           :key="u.id"
@@ -159,7 +165,7 @@
           <span class="relative block aspect-[1200/630] overflow-hidden bg-surface-sunken">
             <img
               :src="u.art"
-              alt="MARVEL Tōkon: Fighting Souls — coming soon to Replay Database"
+              :alt="`${u.fullName} — coming soon to Replay Database`"
               width="1200"
               height="630"
               loading="eager"
@@ -186,8 +192,10 @@
                 u.tagline
               }}</span>
               <!-- Matches the live cards' reserved count line so this card's
-                   height stays theirs. NOT class="count" — that's a gate hook
-                   and the gates count non-empty ones. -->
+                   height stays theirs — and since row 3 is now a MIXED row, it
+                   is levelling against a card that actually has a count rather
+                   than against another blank. NOT class="count" — that's a gate
+                   hook and the gates count non-empty ones. -->
               <span
                 class="count-slot mt-3 block"
                 aria-hidden="true"
@@ -320,7 +328,10 @@ const aggregate = computed(() =>
 useSiteMeta({
   title: 'Replay Database — Competitive Fighting-Game Replays',
   description:
-    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6 and MARVEL Tōkon — character usage, matchups, pairings, and meta over time, all in one place.',
+    // LIVE games only. The announced ones on the selector stay out: this is the
+    // search snippet, and promising a game a visitor cannot browse is the same
+    // lie the UPCOMING type forbids in the sitemap and the ItemList.
+    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6, MARVEL Tōkon and FATAL FURY: City of the Wolves — character usage, matchups, pairings, and meta over time, all in one place.',
 });
 
 // ItemList JSON-LD enumerating the games (PLAN §5 A.6) — the apex's structured
@@ -366,7 +377,8 @@ useJsonLd([
   line-height: 1.25rem;
 }
 /* The hero pill swaps its text client-side too, and the upgraded string
-   ("39,189 replays across 4 games") wraps to two lines on narrow viewports
+   ("39,189 replays across 5 games" — LIVE games only, announced ones never
+   reach this count) wraps to two lines on narrow viewports
    where the fallback ("4 games in the archive") does not — which pushed the
    whole card grid down 18px the moment the counts landed (measured at 320 and
    360 px). Below sm, reserve both lines up front; from sm up neither string
@@ -437,7 +449,8 @@ useJsonLd([
   backdrop-filter: blur(2px);
 }
 /* Mirrors .count exactly — the reserved line is what keeps this card the same
-   height as its neighbour in the grid row. */
+   height as its neighbour in the grid row, including the row where that
+   neighbour is a LIVE card carrying a rendered replay count. */
 .count-slot {
   min-height: 1.25rem;
   line-height: 1.25rem;

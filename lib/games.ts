@@ -169,8 +169,17 @@ export const GAMES: ShellGame[] = [
 export interface UpcomingGame {
   /** Stable identity — the v-for key, and the future GameConfig.id. */
   id: string;
-  /** Full title as the rights holder writes it, diacritics included. */
+  /** The SHORT display form — the card's title column and nothing else. NOT the
+   *  full title: spelled out, every one of these wraps to two lines at the sm
+   *  2-up width and makes its grid row taller than the row above (measured on
+   *  MARVEL Tōkon at 640: 271px vs 297px). Parallel to the live cards' 'Tekken
+   *  8' / 'MARVEL Tōkon' / 'FATAL FURY: CotW'. */
   name: string;
+  /** The full title as the rights holder writes it, diacritics included. The
+   *  card title cannot carry it (see `name`), so the image ALT and the card art
+   *  do. A hard-coded literal here is what shipped the Tōkon alt onto every
+   *  card that followed; index.vue binds this instead. */
+  fullName: string;
   /** Brand wordmark short form. Official casing/diacritics render verbatim,
    *  same principle as Tekken's deliberate 'TEKKEN'. */
   shortName: string;
@@ -186,9 +195,119 @@ export interface UpcomingGame {
   tagline: string;
 }
 
-export const UPCOMING: UpcomingGame[] = [];
-
-// Emptied 2026-08-14 when MARVEL Tōkon shipped and moved into GAMES above.
-// The type and the doc block are kept deliberately: the narrow shape is what
-// makes it impossible for an announced game to reach the sitemap or the
-// JSON-LD by accident, and the next announcement should inherit that.
+// Empty from 2026-08-14 (MARVEL Tōkon's promotion into GAMES) until these three
+// were announced. The narrow type above is what kept that window honest, and it
+// is what keeps these three out of the sitemap index and the ItemList now.
+//
+// ORDER IS DISPLAY ORDER. Unlike GAMES — where APPEND-don't-insert protects a
+// POSITIONAL JSON-LD gate — this array reaches only the card grid, which renders
+// it in sequence. verify-shell asserts the three cards positionally too, so
+// reordering here is a deliberate act with a failing gate attached, not a silent
+// one.
+//
+// ACCENTS ARE PROVISIONAL, and say so per entry. Each is the modal exact fill of
+// an official asset (the sampling method is in scripts/card-art-upcoming.mjs),
+// lifted where the sampled value is too dark to carry the badge's 11px text.
+// At flip time THE THEME WINS: Tōkon's card carried #00a6ff and the shipped skin
+// resolved to #03a5fe, and the card followed the game rather than the reverse.
+//
+// The separation rule every one of them clears, against all five live accents,
+// the umbrella teal, and each other: OKLCH Δhue ≥ 25, or Δhue ≥ 10 with
+// |ΔL| ≥ .12. It is the rule the game skins already use, and it is why FATAL
+// FURY demoted its own sampled red (11° from Tekken) to secondary.
+export const UPCOMING: UpcomingGame[] = [
+  {
+    id: 'ggst',
+    // GUILTY GEAR -STRIVE- — developed AND published by Arc System Works,
+    // verified on guiltygear.com/ggst/en/ (© ARC SYSTEM WORKS) and
+    // arcsystemworks.com/game/guilty-gear-strive/. The vendor's own line for it
+    // is "The ever-evolving 2.5D fighting game", which is where the tagline's
+    // "2.5D fighter" comes from rather than from anyone's memory.
+    name: 'Guilty Gear Strive',
+    fullName: 'GUILTY GEAR -STRIVE-',
+    shortName: 'STRIVE',
+    slug: 'ggst',
+    // PROVISIONAL, and the one accent here that may still move: it is
+    // --color-primary from the in-progress skin
+    // (ggst-replay-database/design/handoff/tokens.css), whose own header calls
+    // the gold anchored-but-unsampled — it comes from the gold-foil logo
+    // variant on the store capsules, not from a pixel sample.
+    // GOLD RATHER THAN THE LOGO'S RED, by that skin's collision lever: the
+    // sampled letterform red is #7b1b1e, and at any lightness that could carry
+    // text it lands on Tekken's #e13048. FATAL FURY demoted its own red for the
+    // same reason; neither game ships red-primary.
+    // Tightest neighbour is FATAL FURY's #ffd21f at Δhue 11 — cleared on
+    // lightness alone, ΔL .125, right at the .12 floor. Δhue 30 from SF6.
+    accent: '#d9a53a',
+    art: '/img/games/ggst.png',
+    tagline: '2.5D fighter · Arc System Works',
+  },
+  {
+    id: 'avatar',
+    // Avatar Legends: The Fighting Game. The studio credits are the one fact
+    // here that no single official surface settles, so the disagreement is
+    // recorded rather than smoothed over:
+    //   · Steam app 2424420 (publisher-submitted fields) — developer
+    //     "Gameplay Group International", publishers "PM Studios, Inc." and
+    //     "Paramount Games"
+    //   · nintendo.com product page — publisher "PM Studios", no developer
+    //   · paramountgames.com/games/avatar-legends-the-fighting-game — credits
+    //     "Paramount Games Studio" as both
+    // Resolved by the maintainer's own confirmation: developer Gameplay Group
+    // International, publisher PM Studios, Inc. The tagline carries the
+    // rights-holder × developer pair in the Tōkon shape; "Paramount" is the
+    // rights holder, as "Marvel" was there.
+    // Slug is 'avatar', not ComboForge's 'ava': this becomes a permanent public
+    // path and readability wins there; the CF id stays a config map.
+    name: 'Avatar Legends',
+    fullName: 'Avatar Legends: The Fighting Game',
+    shortName: 'AVATAR',
+    slug: 'avatar',
+    // PROVISIONAL. Sampled from the official site's own logo
+    // (avatarfighters.com): a dusk indigo #363c88, 54.3% of that asset's flat
+    // fills. Lifted L .395 → .778 for AA — the sampled value is 2.06:1 on the
+    // card ground and the badge sets 11px text in it.
+    // WORTH KNOWING before re-sampling: the logo at
+    // paramountgames.com/avatar-assets/brand/avatar-logo-clean.png and all four
+    // element seals under /avatar-assets/brand/seals/ are pure WHITE line art
+    // on transparent — zero chroma, no accent to take. The key art is a painted
+    // composition whose dominant fills are a cream wash and a fire red 11° from
+    // Tekken. The indigo is the only viable band the official art offers.
+    // Δhue 36 from Tōkon, 90 from the umbrella teal. See the gbvsr entry for
+    // why these two are separated by lightness.
+    accent: '#aeacff',
+    art: '/img/games/avatar.png',
+    tagline: 'Four elements · Paramount × Gameplay Group',
+  },
+  {
+    id: 'gbvsr',
+    // Granblue Fantasy Versus: Rising — "© Cygames, Inc. Developed by ARC
+    // SYSTEM WORKS", verbatim from the footer of the official site
+    // rising.granbluefantasy.jp/en/about. That single line is both credits, so
+    // the tagline's "Cygames × Arc System Works" is the Tōkon shape applied to
+    // a source that states it outright.
+    name: 'Granblue Rising',
+    fullName: 'Granblue Fantasy Versus: Rising',
+    shortName: 'GBVSR',
+    slug: 'gbvsr',
+    // PROVISIONAL. Sampled from the official key-visual logo
+    // (rising.granbluefantasy.jp/assets/images/kv_logo.9880ca03.png): the
+    // ultramarine #0000c8 is 72.5% of its flat fills. Lifted L .376 → .593 for
+    // AA (the sampled value is 1.75:1) and carried +8° of hue, which is what
+    // buys Δhue 28 from Tōkon's #03a5fe. At the sampled hue it could only clear
+    // Tōkon on lightness, and every lightness dark enough to do that fails AA —
+    // the same squeeze Strive's red hit, resolved the other way because this
+    // hue had somewhere to go and that one did not.
+    // The logo's sky #5bc9fa was the obvious alternative and is blocked
+    // outright: Δhue 14 from Tōkon with ΔL .096, under both floors. It survives
+    // as the card art's second hue instead.
+    // SIBLINGS, DELIBERATELY: this and Avatar are the only two cards the
+    // official art puts in the same band (Δhue 12), and at 2-up they share the
+    // last grid row. They are separated by lightness — ΔL .185, half again the
+    // floor — a deep royal blue beside a pale periwinkle. Anyone re-sampling
+    // either one has to re-check the pair, not just the live five.
+    accent: '#5569ff',
+    art: '/img/games/gbvsr.png',
+    tagline: '1v1 fighter · Cygames × Arc System Works',
+  },
+];

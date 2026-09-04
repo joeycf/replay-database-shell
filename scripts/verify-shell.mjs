@@ -11,9 +11,9 @@ import puppeteer from 'puppeteer-core';
  *   1. / renders the selector: umbrella theme (computed --color-primary =
  *      ReplayDB teal), BrandLogo lockup, one card per game with its own accent,
  *      plain-<a> hrefs at /2xko | /tekken, NO game nav (Browse/Stats/…), plus
- *      ONE non-navigable "Coming Soon" card whose badge is present in the
- *      prerendered HTML without hover or JS.
- *   2. ItemList JSON-LD parses and enumerates both games at apex URLs — and the
+ *      THREE non-navigable "Coming Soon" cards whose badges are present in the
+ *      prerendered HTML without hover or JS, each announcing its own game.
+ *   2. ItemList JSON-LD parses and enumerates the live games at apex URLs — and the
  *      sitemap index lists exactly the games that HAVE replays. An
  *      announced-but-unshipped game must reach neither (see lib/games.ts).
  *   3. The selector's /changelog link sits between the aggregate and the cards
@@ -111,12 +111,42 @@ const SUMMARIES = {
  * trade verify-cutover.mjs makes for GAMES. Restating it IS the drift gate:
  * these three constants and the built page must agree.
  */
+/**
+ * UPCOMING, as lib/games.ts declares it — announced games with no archive yet.
+ * Restated for the same reason SUMMARIES and verify-cutover's GAMES table are:
+ * this is a plain-node gate and that table is TypeScript. Restating IS the
+ * drift gate. ORDER MATTERS — the cards are asserted positionally against this,
+ * so reordering lib/games.ts fails here rather than silently reshuffling the
+ * front door.
+ */
+const UPCOMING = [
+  {
+    slug: 'ggst',
+    name: 'Guilty Gear Strive',
+    fullName: 'GUILTY GEAR -STRIVE-',
+    accent: '#d9a53a',
+  },
+  {
+    slug: 'avatar',
+    name: 'Avatar Legends',
+    fullName: 'Avatar Legends: The Fighting Game',
+    accent: '#aeacff',
+  },
+  {
+    slug: 'gbvsr',
+    name: 'Granblue Rising',
+    fullName: 'Granblue Fantasy Versus: Rising',
+    accent: '#5569ff',
+  },
+];
+
 // Derived from the table the page itself renders, so adding a game updates the
 // gate and the page together rather than leaving a literal to go stale.
 const GAME_COUNT = Object.keys(SUMMARIES).length;
-const CHANGELOG_ENTRIES = 32;
-const CHANGELOG_NEWEST = '2026-09-03';
-const CHANGELOG_NEWEST_TEXT = '3 Sep';
+const UPCOMING_COUNT = UPCOMING.length;
+const CHANGELOG_ENTRIES = 33;
+const CHANGELOG_NEWEST = '2026-09-04';
+const CHANGELOG_NEWEST_TEXT = '4 Sep';
 
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
@@ -261,14 +291,14 @@ try {
   );
 
   // The card-count selector above is ANCHOR-scoped (`a.game-card`). Assert the
-  // CLASS-only selector too: UPCOMING is empty today, but the next announced
-  // game gets a non-anchor card, and if someone reuses .game-card on it that
-  // card inherits the hover-lift. This fails HERE, loudly, instead of quietly
-  // shipping something that looks clickable and is not.
+  // CLASS-only selector too: there are three non-anchor coming-soon cards in
+  // the same grid, and if someone reuses .game-card on one it inherits the
+  // hover-lift and the accent border. This fails HERE, loudly, instead of
+  // quietly shipping something that looks clickable and is not.
   const gameCardClass = await page.evaluate(() => document.querySelectorAll('.game-card').length);
   check(
-    `.game-card is the five LIVE cards and nothing else`,
-    gameCardClass === 5,
+    `.game-card is the ${GAME_COUNT} LIVE cards and nothing else`,
+    gameCardClass === GAME_COUNT,
     `${gameCardClass} found`,
   );
 
@@ -330,10 +360,18 @@ try {
       itemList.itemListElement[4].url === 'https://replaydatabase.com/ffcotw',
     JSON.stringify(itemList),
   );
-  // The structural guard against an upcoming game reaching structured data
-  // still holds — UPCOMING has no `url` field, so it cannot reach the ItemList
-  // even by mistake. There is nothing in UPCOMING to assert against today; the
-  // check returns with the next announced game.
+  // THE load-bearing guard for coming-soon games. An upcoming game in
+  // structured data is a lie to search engines, so the ItemList must carry the
+  // games that actually have replays and nothing else. lib/games.ts makes that
+  // structural (UpcomingGame has no `url` field at all) — this proves it holds.
+  // Substring match on the slug, which is safe here and worth checking stays
+  // safe: none of ggst / avatar / gbvsr occurs inside a live game's name or URL.
+  const itemListJson = JSON.stringify(itemList?.itemListElement ?? []).toLowerCase();
+  check(
+    `ItemList carries NO upcoming game (${UPCOMING.map((u) => u.slug).join(', ')})`,
+    !UPCOMING.some((u) => itemListJson.includes(u.slug)),
+    itemListJson,
+  );
 
   // ── 1a. the sitemap index, same guard ────────────────────────────────────
   // Read off disk rather than over the wire: the index is written by
@@ -350,17 +388,111 @@ try {
       ),
     sitemapChildren.join(', '),
   );
+  check(
+    `sitemap index carries NO upcoming game`,
+    !UPCOMING.some((u) => sitemapIndex.toLowerCase().includes(u.slug)),
+    sitemapChildren.join(', '),
+  );
 
-  // ── 1a2. the coming-soon card ────────────────────────────────────────────
-  // UPCOMING is empty since MARVEL Tōkon shipped on 2026-08-14, so there is no
-  // upcoming card to assert against and the whole block is inert rather than
-  // deleted-and-forgotten. What it used to prove, for whoever announces the
-  // next game: the card renders, shows its badge WITHOUT hover (there is no
-  // hover on touch, so a hover-only reveal looks broken on a phone), is not an
-  // <a>, is not focusable, carries no date, and never appears in the ItemList
-  // or the sitemap. Restore these when UPCOMING is non-empty again.
-  const up = await page.evaluate(() => [...document.querySelectorAll('.upcoming-card')].length);
-  check(`no upcoming card renders (UPCOMING is empty)`, up === 0, `${up} found`);
+  // ── 1a2. the coming-soon cards ───────────────────────────────────────────
+  // No hover simulation anywhere in this block — that is the point. There is no
+  // hover on touch, so a hover-only "Coming Soon" reveal would leave the card
+  // looking broken on a phone.
+  const up = await page.evaluate(() =>
+    [...document.querySelectorAll('.upcoming-card')].map((el) => {
+      const badge = el.querySelector('.badge');
+      const rect = badge?.getBoundingClientRect();
+      const cs = badge ? getComputedStyle(badge) : null;
+      const img = el.querySelector('img');
+      return {
+        tag: el.tagName,
+        text: el.textContent.replace(/\s+/g, ' ').trim(),
+        hasHref: el.hasAttribute('href'),
+        insideAnchor: el.closest('a') !== null,
+        anchorsWithin: el.querySelectorAll('a[href]').length,
+        focusable: el.hasAttribute('tabindex'),
+        accent: getComputedStyle(el).getPropertyValue('--accent').trim(),
+        badgeText: badge?.textContent.trim() ?? null,
+        badgeVisible: !!cs && cs.opacity !== '0' && cs.visibility !== 'hidden' && rect.width > 0,
+        name: el.querySelector('.font-display')?.textContent.trim() ?? null,
+        alt: img?.getAttribute('alt') ?? null,
+        artWidth: img?.naturalWidth ?? 0,
+      };
+    }),
+  );
+  check(
+    `${UPCOMING_COUNT} upcoming cards render`,
+    up.length === UPCOMING_COUNT,
+    JSON.stringify(up),
+  );
+
+  // Positional against the restated table: order is display order, so a
+  // reordered lib/games.ts fails here rather than reshuffling the door quietly.
+  UPCOMING.forEach((want, i) => {
+    const u = up[i];
+    check(
+      `upcoming[${i}] ${want.name}: not navigable (tag=${u?.tag}, href=${u?.hasHref}, inside <a>=${u?.insideAnchor}, anchors within=${u?.anchorsWithin}, tabindex=${u?.focusable})`,
+      !!u &&
+        u.tag !== 'A' &&
+        !u.hasHref &&
+        !u.insideAnchor &&
+        u.anchorsWithin === 0 &&
+        !u.focusable,
+      JSON.stringify(u),
+    );
+    check(
+      `upcoming[${i}] ${want.name}: "Coming Soon" badge in the DOM and visible WITHOUT hover`,
+      !!u && u.badgeText === 'Coming Soon' && u.badgeVisible,
+      JSON.stringify(u),
+    );
+    check(
+      `upcoming[${i}] ${want.name}: title, accent ${want.accent}, art at 1200px (${u?.name}, ${u?.accent}, ${u?.artWidth})`,
+      !!u && u.name === want.name && u.accent === want.accent && u.artWidth === 1200,
+      JSON.stringify(u),
+    );
+    // The alt was a hard-coded literal on a v-for until this batch: every card
+    // announced itself as MARVEL Tōkon. It is bound to `fullName` now, so the
+    // alt is the one place the FULL official title reaches a screen reader.
+    check(
+      `upcoming[${i}] ${want.name}: alt names its own game (${JSON.stringify(u?.alt)})`,
+      !!u?.alt && u.alt.includes(want.fullName),
+      JSON.stringify(u?.alt),
+    );
+    check(
+      `upcoming[${i}] ${want.name}: carries no date (a date in the card would go stale on its own)`,
+      // Whole words only — an unanchored month prefix matches "MARvel".
+      !!u &&
+        !/\b(20\d\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b\s+\d/i.test(u.text) &&
+        !/\b20\d\d\b/.test(u.text),
+      u?.text,
+    );
+  });
+  // One literal shared across a v-for is the exact bug this batch fixed; a
+  // count check alone would not have caught it, since three identical alts are
+  // still three alts.
+  const alts = up.map((u) => u.alt);
+  check(
+    `the coming-soon alts are distinct (${new Set(alts).size} for ${up.length} cards)`,
+    new Set(alts).size === up.length,
+    alts.join(' | '),
+  );
+
+  // The checks above read the hydrated DOM. The SERVED html is the stronger
+  // proof: the announcement needs neither hover nor JavaScript, and nothing on
+  // the page links at a slug these games do not own yet.
+  const servedHtml = readFileSync(join(STATIC_DIR, 'index.html'), 'utf8');
+  check(
+    `"Coming Soon" appears ${UPCOMING_COUNT}× in the PRERENDERED html (no JS needed)`,
+    (servedHtml.match(/Coming Soon/g) ?? []).length === UPCOMING_COUNT,
+    `${(servedHtml.match(/Coming Soon/g) ?? []).length} found`,
+  );
+  for (const u of UPCOMING) {
+    check(
+      `prerendered html has no /${u.slug} link`,
+      !new RegExp(`href="[^"]*/${u.slug}`).test(servedHtml),
+      servedHtml.match(new RegExp(`href="[^"]*${u.slug}[^"]*"`, 'g'))?.join(', '),
+    );
+  }
 
   // ── 1b. per-card counts + the aggregate line (Phase 6) ───────────────────
   console.log('\n[/] counts');
@@ -547,7 +679,15 @@ try {
   // game count leaves a gap in the final row and that is a fact about counting,
   // not a defect; a card that is narrower than its neighbours is a defect.
   // Equal widths is the "not squeezed" half; equal row heights is what the
-  // upcoming card's reserved .count-slot buys.
+  // upcoming card's reserved .count-slot buys — and row 3 is now a MIXED row,
+  // a live card with a rendered count beside an announced one without, so that
+  // reservation is load-bearing again for the first time since Tōkon.
+  //
+  // `grid.children` counts EVERY grid child, live and upcoming — so this is the
+  // count that must be the total, not GAME_COUNT. It is also the ONLY clause
+  // here that catches a missing tile: the "only the last row short" logic
+  // happily accepts [2,2,2,1] at seven cards, because that is a legal shape for
+  // an odd total. Drop a card from either array and this is what fails.
   console.log('\n[/] grid regimes');
   const SHOT_DIR = process.env.SHOT_DIR || '/tmp';
   for (const width of [380, 640, 1280]) {
@@ -574,7 +714,7 @@ try {
       };
     });
     const perRow = width < 640 ? 1 : 2;
-    const expectedCards = GAME_COUNT;
+    const expectedCards = GAME_COUNT + UPCOMING_COUNT;
     const full = grid.perRow.slice(0, -1);
     const last = grid.perRow[grid.perRow.length - 1];
     check(
