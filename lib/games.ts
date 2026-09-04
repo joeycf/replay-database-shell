@@ -138,8 +138,9 @@ export const GAMES: ShellGame[] = [
     // 2XKO, Tekken and SF6's cards were made. Tōkon needed a bespoke generator
     // only because it had no game repo at the time; this one does.
     art: '/img/games/ffcotw.png',
-    // No hover-loop video yet. `video` is optional by design — a game without
-    // one simply shows its static key art.
+    // 1:44–1:55 of the Official Special Anime Trailer, trimmed to the siblings'
+    // shape: 1280×720, 30fps, muted (no audio stream at all), 11s.
+    video: '/video/games/ffcotw.mp4',
     tagline: 'Character usage · matchups · meta over time',
     sitemapUrl: `${SITE_URL}/ffcotw/sitemap.xml`,
     summaryUrl: '/ffcotw/data/summary.json',
