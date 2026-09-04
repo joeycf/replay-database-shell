@@ -307,11 +307,11 @@ try {
       sel.cards.includes('/ffcotw'),
   );
   check(
-    `4 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
-    sel.cards.length === 4 && sel.gameCardClass === 4,
+    `5 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
+    sel.cards.length === 5 && sel.gameCardClass === 5,
     JSON.stringify(sel.cards),
   );
-  check(`ItemList JSON-LD parses with 4 games`, sel.itemList === 4);
+  check(`ItemList JSON-LD parses with 5 games`, sel.itemList === 5);
   // UPCOMING is empty since MARVEL Tōkon shipped; restore the non-navigable
   // card gates (no href, not inside an <a>, no focus stop, badge visible
   // without hover) when a game is next announced.
@@ -343,7 +343,8 @@ try {
     `canonical is the apex /changelog (${log.canonical})`,
     log.canonical === `${APEX}/changelog`,
   );
-  check(`badges carry the game accents + umbrella teal (${log.badges} distinct)`, log.badges === 5);
+  // Five game accents plus the umbrella teal for the platform-wide scopes.
+  check(`badges carry the game accents + umbrella teal (${log.badges} distinct)`, log.badges === 6);
   check(`no ItemList on /changelog — the apex's is the selector's`, !log.hasItemList);
 
   for (const path of ['/', '/health', '/changelog']) {
@@ -416,7 +417,7 @@ try {
   const liveTotal = GAMES.reduce((sum, g) => sum + (summaries[g.slug]?.replays ?? 0), 0);
   check(
     `aggregate line totals the archive (${JSON.stringify(live.aggregate)} ≈ ${liveTotal})`,
-    within(num(live.aggregate), liveTotal) && live.aggregate.includes('replays across 4 games'),
+    within(num(live.aggregate), liveTotal) && live.aggregate.includes('replays across 5 games'),
   );
 
   // ── POSITIVE CONTROL: block summaries through the browser ──
@@ -502,7 +503,7 @@ try {
   );
   check(
     `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
-    none.aggregate === '4 games in the archive',
+    none.aggregate === '5 games in the archive',
   );
   check(
     `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(live)})`,
