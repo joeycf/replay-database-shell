@@ -81,7 +81,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    // shell, this commit — UPCOMING returns with three entries after six weeks
+    // shell, this commit. Scope 'shell': the games' data is untouched, only the
+    // front door that lists them.
+    // NO EM DASHES and no numbers, per the rules above. The one number a reader
+    // might want (how many games) is on the selector itself and grows on its own.
+    // "three to a row" rather than a pixel width: a visitor sees the row, not
+    // the measure. The second sentence is the one that earns the entry — the
+    // cards say different things now, which is the visible change; the reflow
+    // is the reason it was possible to say them.
+    // What is deliberately NOT claimed: that anything about the archives
+    // changed. It did not. Every fact in the new card lines was already true
+    // and already filterable; they were simply not what the cards said.
+    date: '2026-09-06',
+    scope: 'shell',
+    kind: 'improvement',
+    title: 'The front door got wider, and the cards got specific',
+    body: 'The game cards now sit three to a row on a wide screen instead of two, so the whole collection fits without scrolling past it. Each card also says what its own archive holds rather than what every archive holds: 2XKO names the Fuse each team ran, Tekken names the rank ladder, Tōkon its four-fighter teams, City of the Wolves its patch history back to the open beta. Four of the five used to carry the same sentence with one word changed. The lines no longer cut off mid-word on a narrow window either, which they had been doing on every card.',
+  },
+  {
+    // shell, 2026-09-04 — UPCOMING returns with three entries after six weeks
     // empty (Tōkon's promotion emptied it on 2026-08-14).
     // scope 'platform' rather than the 'shell' the Tōkon announcement used:
     // that row was about one card and the mechanism behind it, this one is

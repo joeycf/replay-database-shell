@@ -318,6 +318,13 @@ try {
   await page.goto(`${HOST}/`, { waitUntil: 'networkidle0' });
   const sel = await page.evaluate(() => ({
     primary: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(),
+    // The viewport above is 1280, which is the xl boundary — so the DEPLOYED
+    // CSS has to resolve three tracks here. verify-shell proves this locally;
+    // this proves the responsive class survived the build and reached the CDN,
+    // which is the one failure mode a local gate cannot see.
+    gridCols: getComputedStyle(
+      document.querySelector('section[aria-label="Games"]'),
+    ).gridTemplateColumns.split(' ').length,
     cards: [...document.querySelectorAll('a.game-card')].map((a) => a.getAttribute('href')),
     // Class-only as well as anchor-scoped: if the upcoming card ever adopts
     // .game-card it inherits the hover-lift and starts looking clickable.
@@ -361,6 +368,11 @@ try {
     `5 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
     sel.cards.length === 5 && sel.gameCardClass === 5,
     JSON.stringify(sel.cards),
+  );
+  check(
+    `the card grid is 3-up at 1280 (${sel.gridCols} tracks)`,
+    sel.gridCols === 3,
+    JSON.stringify(sel.gridCols),
   );
   check(`ItemList JSON-LD parses with 5 games`, sel.itemList === 5);
   check(

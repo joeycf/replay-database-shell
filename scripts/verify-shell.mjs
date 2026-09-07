@@ -144,9 +144,9 @@ const UPCOMING = [
 // gate and the page together rather than leaving a literal to go stale.
 const GAME_COUNT = Object.keys(SUMMARIES).length;
 const UPCOMING_COUNT = UPCOMING.length;
-const CHANGELOG_ENTRIES = 33;
-const CHANGELOG_NEWEST = '2026-09-04';
-const CHANGELOG_NEWEST_TEXT = '4 Sep';
+const CHANGELOG_ENTRIES = 34;
+const CHANGELOG_NEWEST = '2026-09-06';
+const CHANGELOG_NEWEST_TEXT = '6 Sep';
 
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
@@ -665,11 +665,25 @@ try {
   await page.setViewport({ width: 1280, height: 900 });
 
   // ── 1e. the grid regimes ─────────────────────────────────────────────────
-  // 380 = 1-up (grid-cols-1), 640 = the sm 2-up boundary (40rem), 1280 = the
-  // max-w-[1120px] 2-up. There is deliberately no lg:grid-cols-3 — commit
-  // 5731651 removed it ("max cards to 2 per row"), and re-adding it narrows the
-  // card from 514px to 333px, which truncates EVERY game's tagline ("Champion
-  // usage · team pairing…", measured at 1440 when the fifth game shipped).
+  // 380 = 1-up (grid-cols-1), 640 = the sm 2-up boundary (40rem), 1024 = 2-up
+  // still, proving xl has NOT fired below its boundary, 1280 = the xl 3-up
+  // boundary itself, 1440 = where max-w-[1440px] caps and the card reaches its
+  // full width.
+  //
+  // THE THIRD COLUMN CAME BACK. It was removed in 5731651 ("max cards to 2 per
+  // row") and the note here argued the cap from that revert: at lg inside
+  // max-w-[1120px] the card fell 514px → 333px and every tagline truncated.
+  // Both terms have moved — xl rather than lg, 1440 rather than 1120, so the
+  // narrowest 3-up card is ~382px — and the tagline no longer truncates at any
+  // width, because the "Browse →" CTA left its line box and it now reserves two
+  // lines. The truncation was never the third column's doing in the first
+  // place: the narrowest card on this page is the sm 2-up at 640, and all five
+  // taglines were already clipped there on the shipped page.
+  //
+  // NOTE the scrollbar. `scrollbar-gutter: stable` (engine index.css) makes the
+  // layout box 15px narrower than the viewport, while @media matches the
+  // viewport INCLUDING it — so xl fires at exactly 1280 while the content box
+  // is 1265. Every card width below is off the 1265, not the 1280.
   //
   // THIS USED TO ASSERT THAT EVERY ROW IS FULL, which was true of four cards in
   // a 2-up grid and is arithmetically impossible for five. The invariant that
@@ -690,7 +704,7 @@ try {
   // an odd total. Drop a card from either array and this is what fails.
   console.log('\n[/] grid regimes');
   const SHOT_DIR = process.env.SHOT_DIR || '/tmp';
-  for (const width of [380, 640, 1280]) {
+  for (const width of [380, 640, 1024, 1280, 1440]) {
     await page.setViewport({ width, height: 1400 });
     currentPage = `/ (${width}px)`;
     await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
@@ -713,7 +727,7 @@ try {
         ),
       };
     });
-    const perRow = width < 640 ? 1 : 2;
+    const perRow = width < 640 ? 1 : width < 1280 ? 2 : 3;
     const expectedCards = GAME_COUNT + UPCOMING_COUNT;
     const full = grid.perRow.slice(0, -1);
     const last = grid.perRow[grid.perRow.length - 1];
@@ -732,6 +746,53 @@ try {
       grid.rowHeights.every((row) => new Set(row).size === 1),
       JSON.stringify(grid.rowHeights),
     );
+
+    // ── the two things the copy rewrite actually needs gated ───────────────
+    // Neither existed before, and their absence is why five taglines shipped
+    // ellipsized at 640 and four of them shipped saying the same sentence.
+    // Rows being level (above) cannot catch either: grid stretches items to
+    // their row's height whatever the text inside them does.
+    const text = await page.evaluate(() => {
+      const q = (sel) => [...document.querySelectorAll(`section[aria-label="Games"] ${sel}`)];
+      return {
+        taglines: q('.tagline').map((el) => ({
+          text: el.textContent.trim(),
+          // A clamped line reports more scrollHeight than it shows. +1 absorbs
+          // sub-pixel line-box rounding, not a whole extra line (16px).
+          clipped: el.scrollHeight > el.clientHeight + 1,
+        })),
+        titles: q('.font-display').map((el) => ({
+          text: el.textContent.trim(),
+          lines: Math.round(
+            el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight),
+          ),
+        })),
+      };
+    });
+    check(
+      `${width}px: all ${expectedCards} taglines render and none clips`,
+      text.taglines.length === expectedCards && text.taglines.every((t) => !t.clipped),
+      JSON.stringify(text.taglines),
+    );
+    // The short-name rule in lib/games.ts (`name` is the SHORT title, because a
+    // wrapped title makes its row taller than its neighbour's) was prose and a
+    // README paragraph until now. This is it as a gate.
+    check(
+      `${width}px: every card title is one line`,
+      text.titles.length === expectedCards && text.titles.every((t) => t.lines === 1),
+      JSON.stringify(text.titles),
+    );
+    // Distinctness is the durable one: it is what stops the next game's card
+    // being handed a fifth variation of "Character usage · … · meta over time".
+    // Asserted once, at the first regime — the strings do not vary by width.
+    if (width === 380) {
+      const seen = text.taglines.map((t) => t.text);
+      check(
+        `the ${seen.length} taglines are distinct`,
+        new Set(seen).size === seen.length,
+        seen.join(' | '),
+      );
+    }
     await page.screenshot({ path: `${SHOT_DIR}/shell-selector-${width}.png`, fullPage: true });
   }
   await page.setViewport({ width: 1280, height: 900 });

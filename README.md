@@ -192,6 +192,17 @@ checking that limit first.
    `url`, `accent` (match the game's `theme.css` `--color-primary`), `art`,
    `video`, `tagline`, `sitemapUrl`, `summaryUrl`. The card, the `ItemList`
    JSON-LD, and the sitemap index all pick it up from here.
+   **The tagline names what THIS archive holds that its neighbours' do not** —
+   2XKO's Fuse facet, Tekken's ladder, Tōkon's four-fighter sides, CotW's patch
+   depth. Do not describe it from the key art; copying the art is how four of
+   five cards once ended up as variations on "Character usage · … · meta over
+   time". Never a number that grows (roster size, patch count, replay total):
+   this file bakes into static HTML that only redeploys when the shell changes,
+   so a count here goes stale unattended, and the card already shows the live
+   number from the game's own `summary.json`. Two lines maximum, ≤60 characters
+   — the budget is the narrowest card, which is the `sm` 2-up at 640 and not the
+   3-up. `verify:shell` fails the build on a clipped tagline, a title that wraps,
+   or two taglines that match.
 2. Drop the key art at `public/img/games/<slug>.png` and the muted hover loop at
    `public/video/games/<slug>.mp4`.
 3. Add the rewrite pair to `vercel.json` — both `/<slug>` and `/<slug>/:path*`,
@@ -231,9 +242,15 @@ A game that has been announced but has no replays yet goes in **`UPCOMING`**, no
    card is not interactive.
 3. **Nothing else.** No `vercel.json` rewrite (there is no deployment to proxy
    to), no insights rewrite, no summary, no video.
-4. The tagline describes the game and **never carries a release date**. This repo
-   redeploys only when the shell changes, so a date baked into static HTML goes
-   stale unattended while "Coming Soon" stays true.
+4. The tagline describes the GAME — there is no archive yet, and claiming one is
+   the same lie the missing `url`/`summaryUrl` fields exist to prevent. Same
+   shape as a live tagline otherwise (two lines, ≤60 characters, distinct from
+   every sibling — all three are gated), and it **never carries a release date**.
+   This repo redeploys only when the shell changes, so a date baked into static
+   HTML goes stale unattended while "Coming Soon" stays true.
+   Mind the date gate's regex when you write one: it rejects a month prefix
+   followed by a number, so "Marvel 4v4" and "May 2 fighters" both fail it even
+   though neither is a date.
 5. **The accent has to clear every shipped accent, and the other upcoming ones.**
    The rule the game skins use: OKLCH Δhue ≥ 25, or Δhue ≥ 10 with |ΔL| ≥ .12,
    and at least AA on the card ground (Tekken's `#e13048` is the floor at

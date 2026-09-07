@@ -8,7 +8,7 @@
 
     <main
       id="main"
-      class="mx-auto w-full max-w-[1120px] flex-1 px-5 md:px-8"
+      class="mx-auto w-full max-w-[1440px] flex-1 px-5 md:px-8"
     >
       <!-- Hero: the umbrella lockup leads (the shell is the ONLY surface that
            renders the full BrandLogo; games keep their text wordmarks). -->
@@ -57,17 +57,24 @@
       <!-- One card per game. Each is a full-page navigation (<a>, not NuxtLink)
            so the click hits the edge rewrite (vercel.json), never the SPA
            router — /2xko and /tekken are not routes in this app. -->
-      <!-- TWO COLUMNS, AND A THIRD WAS TRIED AND REJECTED when the fifth game
-           shipped: at three columns the card narrows from 514px to 333px and
-           every game's tagline truncates ("Champion usage · team pairing…"),
-           measured at 1440. That measurement is why the cap stays even now that
-           the count is even — five live cards plus three announced fill four
-           full rows of two, and the half-width gap comes back the moment the
-           total goes odd again. A gap is counting; a squeezed card is a
-           defect. -->
+      <!-- THREE COLUMNS FROM xl, inside a 1440px measure — the same measure the
+           engine's own game pages use, so the front door is no longer the one
+           narrow surface on the platform.
+           A third column WAS tried and reverted once (5731651), and the comment
+           that lived here argued the cap from that: at lg inside max-w-[1120px]
+           the card fell to 333px and every tagline truncated. Both halves of
+           that have moved. The breakpoint is xl, not lg, and the measure is
+           1440, not 1120, so the narrowest 3-up card is ~382px rather than 333;
+           and the tagline no longer truncates at any width, because the CTA
+           left its line box and it reserves two lines (see .tagline below).
+           What the old comment could not know: the truncation it blamed on the
+           third column was never about the third column. The narrowest card on
+           this page is the sm 2-up at 640, and EVERY tagline was ellipsizing
+           there already, on the shipped page, with two columns. The third
+           column exposed a defect; it did not cause one. -->
       <section
         aria-label="Games"
-        class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24"
+        class="grid grid-cols-1 gap-6 pb-16 sm:grid-cols-2 md:gap-7 md:pb-24 xl:grid-cols-3"
       >
         <a
           v-for="g in games"
@@ -108,32 +115,44 @@
             />
           </span>
 
-          <span class="flex flex-1 items-end justify-between gap-4 p-5 md:p-6">
-            <span class="flex min-w-0 flex-col">
-              <span class="font-display text-title font-bold text-text">{{ g.name }}</span>
-              <span class="mt-1 truncate font-mono text-[11px] text-text-muted">{{
-                g.tagline
-              }}</span>
-              <!-- The count line keeps its box whether or not the number
-                   arrives: a summary that 404s (a game that hasn't shipped one)
-                   or lands late must not shift the card. -->
-              <span class="count mt-3 block font-ui text-[13px] font-semibold text-text-secondary">
+          <!-- THE CTA SHARES THE COUNT'S ROW, not the title's. It used to be a
+               sibling of the whole title column, which cost the title and the
+               tagline its ~77px at every width — and it bought nothing, because
+               `items-end` bottom-aligned it against the count line anyway, so
+               it already LOOKED like it sat there. Moving it is what makes the
+               tagline legible at the narrowest card (the sm 2-up at 640, where
+               the old arrangement left ~24 characters and clipped all five) and
+               what stops 'Street Fighter 6' and 'FATAL FURY: CotW' wrapping
+               their titles there. `flex-1 flex-col justify-end` reproduces the
+               old bottom anchoring exactly. -->
+          <span class="flex flex-1 flex-col justify-end p-5 md:p-6">
+            <span class="font-display text-title font-bold text-text">{{ g.name }}</span>
+            <span class="tagline mt-1 line-clamp-2 font-mono text-[11px] text-text-muted">{{
+              g.tagline
+            }}</span>
+            <!-- The count line keeps its box whether or not the number
+                 arrives: a summary that 404s (a game that hasn't shipped one)
+                 or lands late must not shift the card. -->
+            <span class="mt-3 flex items-end justify-between gap-4">
+              <span
+                class="count block min-w-0 font-ui text-[13px] font-semibold text-text-secondary"
+              >
                 <template v-if="countFor(g.id) !== null"
                   >{{ fmt(countFor(g.id)!) }} replays</template
                 >
               </span>
-            </span>
 
-            <span
-              class="cta flex flex-none items-center gap-1.5 font-ui text-[13px] font-bold"
-              :style="{ color: g.accent }"
-            >
-              Browse
               <span
-                class="transition-transform duration-normal group-hover:translate-x-1"
-                aria-hidden="true"
-                >→</span
+                class="cta flex flex-none items-center gap-1.5 font-ui text-[13px] font-bold"
+                :style="{ color: g.accent }"
               >
+                Browse
+                <span
+                  class="transition-transform duration-normal group-hover:translate-x-1"
+                  aria-hidden="true"
+                  >→</span
+                >
+              </span>
             </span>
           </span>
         </a>
@@ -146,11 +165,11 @@
              The affordance is therefore the PERSISTENT badge — always rendered,
              always in the accessibility tree — not a hover reveal, which would
              leave the card looking simply broken on touch.
-             NEW SINCE TŌKON: with an odd LIVE count and three announced games,
-             the 2-up grid pairs the last live card with the first upcoming one
-             in row 3. That row has to sit level with a card that renders a
-             replay count against one that never will, which is exactly what the
-             reserved .count-slot below buys. -->
+             With an odd LIVE count and three announced games, every regime
+             puts a live card beside an announced one in some row — row 3 at
+             2-up, row 2 at 3-up. That row has to sit level with a card that
+             renders a replay count against one that never will, which is
+             exactly what the reserved .count-slot below buys. -->
         <article
           v-for="u in upcoming"
           :key="u.id"
@@ -185,25 +204,28 @@
             </span>
           </span>
 
-          <span class="flex flex-1 items-end justify-between gap-4 p-5 md:p-6">
-            <span class="flex min-w-0 flex-col">
-              <span class="font-display text-title font-bold text-text">{{ u.name }}</span>
-              <span class="mt-1 truncate font-mono text-[11px] text-text-muted">{{
-                u.tagline
-              }}</span>
-              <!-- Matches the live cards' reserved count line so this card's
-                   height stays theirs — and since row 3 is now a MIXED row, it
-                   is levelling against a card that actually has a count rather
-                   than against another blank. NOT class="count" — that's a gate
-                   hook and the gates count non-empty ones. -->
-              <span
-                class="count-slot mt-3 block"
-                aria-hidden="true"
-              />
-            </span>
-            <!-- No CTA counterpart to the live cards' "Browse →": there is
-                 nothing to do here, the badge already says so, and the text
-                 would eat the title column at the sm 2-up width. -->
+          <span class="flex flex-1 flex-col justify-end p-5 md:p-6">
+            <span class="font-display text-title font-bold text-text">{{ u.name }}</span>
+            <span class="tagline mt-1 line-clamp-2 font-mono text-[11px] text-text-muted">{{
+              u.tagline
+            }}</span>
+            <!-- Matches the live cards' reserved count line so this card's
+                 height stays theirs — and every regime now has a MIXED row, so
+                 it is levelling against a card that actually has a count rather
+                 than against another blank. NOT class="count" — that's a gate
+                 hook and the gates count non-empty ones.
+                 Its live counterpart shares its row with the "Browse →" CTA;
+                 there is no CTA here, so this is a bare reserved line. -->
+            <span
+              class="count-slot mt-3 block"
+              aria-hidden="true"
+            />
+            <!-- No CTA counterpart to the live cards' "Browse →", and the
+                 reason is no longer a width one — since the CTA moved onto the
+                 count row, the title column is the full card on both variants.
+                 It is simply that there is nothing here to navigate to, which
+                 is the same fact the badge above states and the missing `href`
+                 enforces. -->
           </span>
         </article>
       </section>
@@ -369,6 +391,23 @@ useJsonLd([
 }
 .accent-bar {
   background: var(--accent);
+}
+/* Two lines, reserved. This was a single `truncate`d line until now, and it
+   ellipsized on the SHIPPED page at every width below ~1100px — all five live
+   taglines were clipped at the sm 2-up (640), which is the narrowest card here
+   and not, as the grid comment above used to claim, the 3-up one.
+   Reserving the second line up front is what lets the copy in lib/games.ts be
+   written for meaning instead of to a character count, and it keeps a card
+   whose line happens to fit on one exactly as tall as the card beside it —
+   without it, a wrapped neighbour stretches the row and pushes this card's
+   `justify-end` text block down. Same trade .count makes below, for the same
+   reason.
+   line-height MUST be pinned: `text-[11px]` sets font-size only, so the box
+   would otherwise inherit 1.5 from preflight and the reservation would be a
+   fractional 33px. */
+.tagline {
+  line-height: 1rem;
+  min-height: 2rem;
 }
 /* Reserve exactly one line for the replay count so the card's height is the
    same before and after the summary fetch resolves (or fails). */
