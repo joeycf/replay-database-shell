@@ -53,12 +53,16 @@
  * scope-to-accent mapping therefore lives in app/pages/changelog.vue.
  */
 
-/** Which part of the platform a change belongs to. The four game slugs match
+/** Which part of the platform a change belongs to. The six game slugs match
  *  ShellGame.slug in lib/games.ts (NOT .id — Tekken's id is 'tekken8'), which
  *  is how the page finds each badge's accent. 'platform' is a change all games
- *  got at once; 'engine' and 'shell' are the shared layer and the apex. */
+ *  got at once; 'engine' and 'shell' are the shared layer and the apex.
+ *  Adding one is three edits, and only the first is type-checked: this union,
+ *  SCOPES in scripts/verify-changelog.mjs, and SCOPE_LABELS in
+ *  app/pages/changelog.vue. The last is a Record<Scope, string>, so omitting it
+ *  is a typecheck failure rather than a badge that quietly renders its slug. */
 export type Scope =
-  'platform' | 'engine' | 'shell' | '2xko' | 'tekken' | 'sf6' | 'tokon' | 'ffcotw';
+  'platform' | 'engine' | 'shell' | '2xko' | 'tekken' | 'sf6' | 'tokon' | 'ffcotw' | 'ggst';
 
 /** launch = a game or the platform itself going live · feature = something new
  *  to use · data = matches or fields arriving · improvement = something that
@@ -80,6 +84,48 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    // ggst-replay-database, launch. Every number frozen from that repo's
+    // data/replays.json on 2026-09-09: 24,706 published records, 7,966 of which
+    // carry a startSeconds (the Replay Theater segments), 8,245 from that
+    // catalogue in total, and 1,288 on Ver 2.02, the newest patch. Earliest
+    // record 2020-04-18, a closed-beta build fourteen months before the June
+    // 2021 release; the pre-release era runs to Ver 1.03.
+    //
+    // "SETS", NOT "MATCHES", and this is the one word the entry turns on. CotW's
+    // row and SF6's both say matches, correctly for their sources; copying them
+    // here would have been wrong. A Strive game runs about three minutes (the
+    // catalogue's own same-pair gap median is 196s) and every intake channel's
+    // p10 upload is at least 3m35 with medians from 5m21 to 10m30, so a channel
+    // upload is a whole set. The single exception is the frozen ggstLowLevel,
+    // and it contributes 19 records. The segments are the other half of the
+    // sentence: those ARE single matches, cut at an offset out of an event
+    // stream, which is why the body can say both without contradicting itself.
+    // "short clips" covers ggstHq's Shorts, median exactly 60s, which is why
+    // that channel carries a 30-second duration floor where the platform
+    // default is 120.
+    //
+    // SEASON HONESTY, STATED OUT LOUD, because the filter default depends on it:
+    // the patch filter defaults to the WHOLE archive and offers seasons above
+    // patches, and the reason is that the current patch is 5.2% of what is here.
+    // A patch-first default would have shown a visitor one twentieth of the
+    // archive and looked like the archive.
+    //
+    // EVO IS DELIBERATELY NOT NAMED. Strive is an Evo main game and the
+    // temptation is real, but the catalogue holds 107 Evo rows out of 22,000,
+    // essentially 2021 and 2022 with a token tail. Naming it would promise a
+    // depth this archive does not have.
+    //
+    // The roster count is absent on purpose, exactly as CotW's row omitted its
+    // own: two Season 5 characters are announced and unnamed (Winter 2026 and
+    // Spring 2027 on ArcSys's store page), so any fighter number goes stale
+    // inside a season. The record count is a frozen launch delta and does not.
+    date: '2026-09-09',
+    scope: 'ggst',
+    kind: 'launch',
+    title: 'GUILTY GEAR -STRIVE- joins the archive',
+    body: 'GUILTY GEAR -STRIVE- joins Replay Database with 24,706 replays, running from an April 2020 pre-release build through Season 5. Most are whole sets and short clips rather than single matches, because that is what the channels upload; 7,966 are tournament matches cut from event streams, so opening one starts the video at that match rather than at the top of the bracket. Every patch in the game history is represented, and at launch the current one held 1,288 of those replays, so the filters open on the whole archive and offer seasons before patches. Footage from before the June 2021 release is filed under its own era, so a season filter leaves it out.',
+  },
   {
     // shell, this commit. Scope 'shell': the games' data is untouched, only the
     // front door that lists them.

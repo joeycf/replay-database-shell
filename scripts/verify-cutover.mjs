@@ -40,7 +40,9 @@ const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome-stable';
 const APEX = 'https://replaydatabase.com';
 
 /**
- * The games, as the shell's lib/games.ts declares them. Restated here because
+ * The games, as the shell's lib/games.ts declares them. ORDER MATCHES that
+ * array, which matters because the ItemList is asserted positionally there and
+ * the two tables have to be read against each other. Restated here because
  * this is a plain-node script that can't import the TS module — but `id` and
  * `name` are exactly what each game's pipeline hardcodes into its summary.json
  * (scripts/emit.ts), so asserting them below is the cross-repo drift gate for
@@ -80,6 +82,19 @@ const GAMES = [
     // vocabulary already matches the engine's, so there was nothing to override.
     charPath: '/ffcotw/characters/terry-bogard',
   },
+  {
+    slug: 'ggst',
+    id: 'ggst',
+    // The FULL title, compared against summary.json's `name`. The selector card
+    // uses the short 'Guilty Gear Strive' — this is the one place the official
+    // GUILTY GEAR -STRIVE- spelling is asserted outside the card art.
+    name: 'GUILTY GEAR -STRIVE-',
+    primary: '#d9a53a',
+    // Keeps the engine's default 'characters' segment. The id is full-name
+    // kebab by this game's own convention (sol-badguy, not sol), which is what
+    // makes its ComboForge deep links derive; a bare 'sol' here would 404.
+    charPath: '/ggst/characters/sol-badguy',
+  },
 ];
 
 /**
@@ -91,7 +106,6 @@ const GAMES = [
  * ORDER MATTERS: the cards are asserted positionally against this.
  */
 const UPCOMING = [
-  { slug: 'ggst', name: 'Guilty Gear Strive' },
   { slug: 'avatar', name: 'Avatar Legends' },
   { slug: 'gbvsr', name: 'Granblue Rising' },
 ];
@@ -155,6 +169,7 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     '/sf6/sitemap.xml',
     '/tokon/sitemap.xml',
     '/ffcotw/sitemap.xml',
+    '/ggst/sitemap.xml',
   ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
@@ -357,16 +372,17 @@ try {
   }));
   check(`selector wears the umbrella teal (${sel.primary})`, sel.primary === '#17cfc8');
   check(
-    `cards link /2xko + /tekken + /sf6 + /tokon + /ffcotw`,
+    `cards link /2xko + /tekken + /sf6 + /tokon + /ffcotw + /ggst`,
     sel.cards.includes('/2xko') &&
       sel.cards.includes('/tekken') &&
       sel.cards.includes('/sf6') &&
       sel.cards.includes('/tokon') &&
-      sel.cards.includes('/ffcotw'),
+      sel.cards.includes('/ffcotw') &&
+      sel.cards.includes('/ggst'),
   );
   check(
-    `5 NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
-    sel.cards.length === 5 && sel.gameCardClass === 5,
+    `${GAMES.length} NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,
+    sel.cards.length === GAMES.length && sel.gameCardClass === GAMES.length,
     JSON.stringify(sel.cards),
   );
   check(
@@ -374,7 +390,7 @@ try {
     sel.gridCols === 3,
     JSON.stringify(sel.gridCols),
   );
-  check(`ItemList JSON-LD parses with 5 games`, sel.itemList === 5);
+  check(`ItemList JSON-LD parses with ${GAMES.length} games`, sel.itemList === GAMES.length);
   check(
     `${UPCOMING.length} upcoming cards on the apex`,
     sel.upcoming.length === UPCOMING.length,
@@ -429,8 +445,16 @@ try {
     `canonical is the apex /changelog (${log.canonical})`,
     log.canonical === `${APEX}/changelog`,
   );
-  // Five game accents plus the umbrella teal for the platform-wide scopes.
-  check(`badges carry the game accents + umbrella teal (${log.badges} distinct)`, log.badges === 6);
+  // One accent per LIVE game plus the umbrella teal for the platform-wide
+  // scopes. Derived from GAMES rather than restated: a new game adds a COLOUR
+  // here as well as a card, and the literal 6 this used to hold is exactly the
+  // kind of second-order count a flip forgets. It and the navigable-card count
+  // above were the two sites this game's flip missed on the first pass, and
+  // this gate is what found them.
+  check(
+    `badges carry the game accents + umbrella teal (${log.badges} distinct)`,
+    log.badges === GAMES.length + 1,
+  );
   check(`no ItemList on /changelog — the apex's is the selector's`, !log.hasItemList);
 
   for (const path of ['/', '/health', '/changelog']) {
@@ -503,7 +527,8 @@ try {
   const liveTotal = GAMES.reduce((sum, g) => sum + (summaries[g.slug]?.replays ?? 0), 0);
   check(
     `aggregate line totals the archive (${JSON.stringify(live.aggregate)} ≈ ${liveTotal})`,
-    within(num(live.aggregate), liveTotal) && live.aggregate.includes('replays across 5 games'),
+    within(num(live.aggregate), liveTotal) &&
+      live.aggregate.includes(`replays across ${GAMES.length} games`),
   );
 
   // ── POSITIVE CONTROL: block summaries through the browser ──
@@ -589,7 +614,7 @@ try {
   );
   check(
     `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
-    none.aggregate === '5 games in the archive',
+    none.aggregate === `${GAMES.length} games in the archive`,
   );
   check(
     `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(live)})`,

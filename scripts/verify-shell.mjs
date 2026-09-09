@@ -11,8 +11,9 @@ import puppeteer from 'puppeteer-core';
  *   1. / renders the selector: umbrella theme (computed --color-primary =
  *      ReplayDB teal), BrandLogo lockup, one card per game with its own accent,
  *      plain-<a> hrefs at /2xko | /tekken, NO game nav (Browse/Stats/…), plus
- *      THREE non-navigable "Coming Soon" cards whose badges are present in the
- *      prerendered HTML without hover or JS, each announcing its own game.
+ *      the non-navigable "Coming Soon" cards (two, since Strive was promoted)
+ *      whose badges are present in the prerendered HTML without hover or JS,
+ *      each announcing its own game.
  *   2. ItemList JSON-LD parses and enumerates the live games at apex URLs — and the
  *      sitemap index lists exactly the games that HAVE replays. An
  *      announced-but-unshipped game must reach neither (see lib/games.ts).
@@ -104,6 +105,17 @@ const SUMMARIES = {
     characters: 30,
     updated: '2026-09-03',
   },
+  // Sixth contributor, keeping the one-digit-per-game property: the six
+  // replay counts sum to 654,321,234, so a mis-sum still cannot hide behind a
+  // plausible total.
+  ggst: {
+    game: 'ggst',
+    name: 'GUILTY GEAR -STRIVE-',
+    replays: 600000000,
+    players: 600,
+    characters: 34,
+    updated: '2026-09-09',
+  },
 };
 /**
  * The changelog, as lib/changelog.ts declares it. Restated rather than imported
@@ -120,12 +132,6 @@ const SUMMARIES = {
  * front door.
  */
 const UPCOMING = [
-  {
-    slug: 'ggst',
-    name: 'Guilty Gear Strive',
-    fullName: 'GUILTY GEAR -STRIVE-',
-    accent: '#d9a53a',
-  },
   {
     slug: 'avatar',
     name: 'Avatar Legends',
@@ -144,9 +150,9 @@ const UPCOMING = [
 // gate and the page together rather than leaving a literal to go stale.
 const GAME_COUNT = Object.keys(SUMMARIES).length;
 const UPCOMING_COUNT = UPCOMING.length;
-const CHANGELOG_ENTRIES = 34;
-const CHANGELOG_NEWEST = '2026-09-06';
-const CHANGELOG_NEWEST_TEXT = '6 Sep';
+const CHANGELOG_ENTRIES = 35;
+const CHANGELOG_NEWEST = '2026-09-09';
+const CHANGELOG_NEWEST_TEXT = '9 Sep';
 
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
@@ -263,12 +269,13 @@ try {
       artLoaded: a.querySelector('img')?.naturalWidth > 0,
     })),
   );
-  check(`5 game cards render`, cards.length === 5, JSON.stringify(cards));
+  check(`${GAME_COUNT} game cards render`, cards.length === GAME_COUNT, JSON.stringify(cards));
   const two = cards.find((c) => c.href === '/2xko');
   const tek = cards.find((c) => c.href === '/tekken');
   const sf6 = cards.find((c) => c.href === '/sf6');
   const tok = cards.find((c) => c.href === '/tokon');
   const cotw = cards.find((c) => c.href === '/ffcotw');
+  const ggst = cards.find((c) => c.href === '/ggst');
   check(
     `2XKO card: href=/2xko, accent #ff2e88, art loads`,
     !!two && two.accent === '#ff2e88' && two.name === '2XKO' && two.artLoaded,
@@ -289,9 +296,16 @@ try {
     `CotW card: href=/ffcotw, accent #ffd21f, art loads`,
     !!cotw && cotw.accent === '#ffd21f' && cotw.name === 'FATAL FURY: CotW' && cotw.artLoaded,
   );
+  // The name asserted here is the SHORT one, as Tōkon's and CotW's are. The
+  // full GUILTY GEAR -STRIVE- is in the card art and in summary.json, and
+  // verify-cutover.mjs is what checks it against the latter.
+  check(
+    `Strive card: href=/ggst, accent #d9a53a, art loads`,
+    !!ggst && ggst.accent === '#d9a53a' && ggst.name === 'Guilty Gear Strive' && ggst.artLoaded,
+  );
 
   // The card-count selector above is ANCHOR-scoped (`a.game-card`). Assert the
-  // CLASS-only selector too: there are three non-anchor coming-soon cards in
+  // CLASS-only selector too: there are non-anchor coming-soon cards in
   // the same grid, and if someone reuses .game-card on one it inherits the
   // hover-lift and the accent border. This fails HERE, loudly, instead of
   // quietly shipping something that looks clickable and is not.
@@ -350,14 +364,15 @@ try {
   });
   const itemList = jsonLd.find((n) => n['@type'] === 'ItemList');
   check(
-    `ItemList JSON-LD parses with all five games at apex URLs`,
+    `ItemList JSON-LD parses with all ${GAME_COUNT} games at apex URLs`,
     !!itemList &&
-      itemList.itemListElement?.length === 5 &&
+      itemList.itemListElement?.length === GAME_COUNT &&
       itemList.itemListElement[0].url === 'https://replaydatabase.com/2xko' &&
       itemList.itemListElement[1].url === 'https://replaydatabase.com/tekken' &&
       itemList.itemListElement[2].url === 'https://replaydatabase.com/sf6' &&
       itemList.itemListElement[3].url === 'https://replaydatabase.com/tokon' &&
-      itemList.itemListElement[4].url === 'https://replaydatabase.com/ffcotw',
+      itemList.itemListElement[4].url === 'https://replaydatabase.com/ffcotw' &&
+      itemList.itemListElement[5].url === 'https://replaydatabase.com/ggst',
     JSON.stringify(itemList),
   );
   // THE load-bearing guard for coming-soon games. An upcoming game in
@@ -380,10 +395,10 @@ try {
   const sitemapIndex = readFileSync(join(STATIC_DIR, 'sitemap.xml'), 'utf8');
   const sitemapChildren = [...sitemapIndex.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   check(
-    `sitemap index lists exactly 5 game children + the page sitemap (${sitemapChildren.length})`,
-    sitemapChildren.length === 6 &&
+    `sitemap index lists exactly ${GAME_COUNT} game children + the page sitemap (${sitemapChildren.length})`,
+    sitemapChildren.length === GAME_COUNT + 1 &&
       sitemapChildren.includes('https://replaydatabase.com/sitemap-pages.xml') &&
-      ['2xko', 'tekken', 'sf6', 'tokon', 'ffcotw'].every((s) =>
+      ['2xko', 'tekken', 'sf6', 'tokon', 'ffcotw', 'ggst'].every((s) =>
         sitemapChildren.includes(`https://replaydatabase.com/${s}/sitemap.xml`),
       ),
     sitemapChildren.join(', '),
@@ -468,8 +483,8 @@ try {
     );
   });
   // One literal shared across a v-for is the exact bug this batch fixed; a
-  // count check alone would not have caught it, since three identical alts are
-  // still three alts.
+  // count check alone would not have caught it, since N identical alts are
+  // still N alts.
   const alts = up.map((u) => u.alt);
   check(
     `the coming-soon alts are distinct (${new Set(alts).size} for ${up.length} cards)`,
@@ -534,7 +549,7 @@ try {
       ),
     }));
 
-  await waitForCounts(5).catch(() => {});
+  await waitForCounts(GAME_COUNT).catch(() => {});
   const all = await readSelector();
   for (const [slug, s] of Object.entries(SUMMARIES)) {
     const href = `/${slug}`;
@@ -545,8 +560,8 @@ try {
   }
   const allTotal = Object.values(SUMMARIES).reduce((sum, s) => sum + s.replays, 0);
   check(
-    `aggregate sums all five (${JSON.stringify(all.aggregate)})`,
-    all.aggregate === `${fmt(allTotal)} replays across 5 games`,
+    `aggregate sums all ${GAME_COUNT} (${JSON.stringify(all.aggregate)})`,
+    all.aggregate === `${fmt(allTotal)} replays across ${GAME_COUNT} games`,
   );
 
   await page.screenshot({
@@ -582,7 +597,7 @@ try {
   servedSlugs.delete(BLOCKED);
   currentPage = '/ (summary blocked)';
   await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-  await waitForCounts(4).catch(() => {});
+  await waitForCounts(GAME_COUNT - 1).catch(() => {});
   const partial = await readSelector();
 
   check(
@@ -591,8 +606,8 @@ try {
   );
   const partialTotal = allTotal - SUMMARIES[BLOCKED].replays;
   check(
-    `aggregate sums only the four that resolved (${JSON.stringify(partial.aggregate)})`,
-    partial.aggregate === `${fmt(partialTotal)} replays across 5 games`,
+    `aggregate sums only the ${GAME_COUNT - 1} that resolved (${JSON.stringify(partial.aggregate)})`,
+    partial.aggregate === `${fmt(partialTotal)} replays across ${GAME_COUNT} games`,
   );
   for (const slug of Object.keys(SUMMARIES).filter((s) => s !== BLOCKED)) {
     check(
@@ -627,7 +642,7 @@ try {
   );
   check(
     `aggregate falls back to the game count (${JSON.stringify(none.aggregate)})`,
-    none.aggregate === '5 games in the archive',
+    none.aggregate === `${GAME_COUNT} games in the archive`,
   );
   check(
     `NO layout shift when the counts arrive (${heightsOf(none)} → ${heightsOf(all)})`,
@@ -651,7 +666,7 @@ try {
       currentPage = served ? '/' : '/ (summary blocked)';
       await page.setViewport({ width, height: 900 });
       await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-      if (served) await waitForCounts(5).catch(() => {});
+      if (served) await waitForCounts(GAME_COUNT).catch(() => {});
       else await page.waitForNetworkIdle({ idleTime: 500, timeout: 10000 }).catch(() => {});
       states.push(await readSelector());
     }
@@ -693,9 +708,14 @@ try {
   // game count leaves a gap in the final row and that is a fact about counting,
   // not a defect; a card that is narrower than its neighbours is a defect.
   // Equal widths is the "not squeezed" half; equal row heights is what the
-  // upcoming card's reserved .count-slot buys — and row 3 is now a MIXED row,
-  // a live card with a rendered count beside an announced one without, so that
-  // reservation is load-bearing again for the first time since Tōkon.
+  // upcoming card's reserved .count-slot buys. NOTE that at six live and two
+  // announced NO regime produces a mixed row any more (3-up packs [3,3][2],
+  // 2-up packs [2,2,2][2]), so that reservation is dormant and NOTHING HERE
+  // WOULD CATCH ITS REMOVAL today — every row is all-live or all-announced, and
+  // levels either way. It was dormant between Tōkon's promotion and CotW's
+  // launch for the same reason. index.vue says the same thing beside the
+  // markup; neither is a gate, and pretending otherwise is how the claim went
+  // stale in the first place.
   //
   // `grid.children` counts EVERY grid child, live and upcoming — so this is the
   // count that must be the total, not GAME_COUNT. It is also the ONLY clause
@@ -708,7 +728,7 @@ try {
     await page.setViewport({ width, height: 1400 });
     currentPage = `/ (${width}px)`;
     await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
-    await waitForCounts(5).catch(() => {});
+    await waitForCounts(GAME_COUNT).catch(() => {});
     const grid = await page.evaluate(() => {
       const sec = document.querySelector('section[aria-label="Games"]');
       const kids = [...sec.children];
@@ -877,18 +897,21 @@ try {
     `first entry's date renders as its authored day, not UTC-shifted (${log.firstDate} → ${JSON.stringify(log.firstDateText)})`,
     log.firstDate === CHANGELOG_NEWEST && log.firstDateText === CHANGELOG_NEWEST_TEXT,
   );
-  // One badge per entry, and the palette is the FIVE game accents plus the
-  // umbrella teal for the platform-wide scopes — six distinct colors. Fewer
-  // means a scope silently fell through to the fallback (the tekken8-vs-tekken
-  // trap: lib/games.ts keys on `id`, the changelog on `slug`).
+  // One badge per entry, and the palette is one accent per LIVE GAME plus the
+  // umbrella teal for the platform-wide scopes. Fewer means a scope silently
+  // fell through to the fallback (the tekken8-vs-tekken trap: lib/games.ts keys
+  // on `id`, the changelog on `slug`). Derived from GAME_COUNT rather than
+  // restated, because a sixth game is a NEW COLOUR here and the literal 6 this
+  // used to assert would have failed on the count while saying nothing about
+  // the cause.
   check(
     `every entry carries a scope badge (${log.badgeColors.length})`,
     log.badgeColors.length === CHANGELOG_ENTRIES,
   );
   const distinctBadges = new Set(log.badgeColors);
   check(
-    `badges use all 5 game accents + the umbrella teal (${distinctBadges.size} distinct)`,
-    distinctBadges.size === 6,
+    `badges use all ${GAME_COUNT} game accents + the umbrella teal (${distinctBadges.size} distinct)`,
+    distinctBadges.size === GAME_COUNT + 1,
     [...distinctBadges].join(', '),
   );
   // The selector's ItemList must not follow us here, and nothing on this page

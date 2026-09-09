@@ -165,11 +165,19 @@
              The affordance is therefore the PERSISTENT badge — always rendered,
              always in the accessibility tree — not a hover reveal, which would
              leave the card looking simply broken on touch.
-             With an odd LIVE count and three announced games, every regime
-             puts a live card beside an announced one in some row — row 3 at
-             2-up, row 2 at 3-up. That row has to sit level with a card that
-             renders a replay count against one that never will, which is
-             exactly what the reserved .count-slot below buys. -->
+             NO REGIME HAS A MIXED ROW TODAY, and this comment used to claim
+             every one did. That was true at five live cards and three
+             announced; Strive's promotion on 2026-09-09 made it six and two,
+             which packs as [3,3][2] at 3-up and [2,2,2][2] at 2-up — every row
+             is all-live or all-announced, and at 1-up nothing shares a row at
+             all. So the reserved .count-slot below is DORMANT, not load-bearing,
+             and nothing in the gates would notice if it were deleted: the
+             `every grid row is level` check passes either way while the counts
+             happen to be even. It stays because the next promotion or the next
+             announcement re-creates the mixed row — it was dormant from Tōkon's
+             promotion until CotW's launch for exactly the same reason — and
+             because a card that changes height when its neighbour's count
+             resolves is the regression it was written to prevent. -->
         <article
           v-for="u in upcoming"
           :key="u.id"
@@ -210,10 +218,12 @@
               u.tagline
             }}</span>
             <!-- Matches the live cards' reserved count line so this card's
-                 height stays theirs — and every regime now has a MIXED row, so
-                 it is levelling against a card that actually has a count rather
-                 than against another blank. NOT class="count" — that's a gate
-                 hook and the gates count non-empty ones.
+                 height stays theirs. At six live and two announced it levels
+                 against the other announced card — another blank — because no
+                 regime pairs a live card with an announced one any more; see
+                 the grid comment above for why it is kept regardless.
+                 NOT class="count" — that's a gate hook and the gates count
+                 non-empty ones.
                  Its live counterpart shares its row with the "Browse →" CTA;
                  there is no CTA here, so this is a bare reserved line. -->
             <span
@@ -353,7 +363,7 @@ useSiteMeta({
     // LIVE games only. The announced ones on the selector stay out: this is the
     // search snippet, and promising a game a visitor cannot browse is the same
     // lie the UPCOMING type forbids in the sitemap and the ItemList.
-    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6, MARVEL Tōkon and FATAL FURY: City of the Wolves — character usage, matchups, pairings, and meta over time, all in one place.',
+    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6, MARVEL Tōkon, FATAL FURY: City of the Wolves and Guilty Gear Strive — character usage, matchups, pairings, and meta over time, all in one place.',
 });
 
 // ItemList JSON-LD enumerating the games (PLAN §5 A.6) — the apex's structured
@@ -416,9 +426,10 @@ useJsonLd([
   line-height: 1.25rem;
 }
 /* The hero pill swaps its text client-side too, and the upgraded string
-   ("39,189 replays across 5 games" — LIVE games only, announced ones never
-   reach this count) wraps to two lines on narrow viewports
-   where the fallback ("4 games in the archive") does not — which pushed the
+   ("39,189 replays across 5 games" as measured when this was written — LIVE
+   games only, announced ones never reach this count; it reads six games and a
+   far larger total since Strive) wraps to two lines on narrow viewports
+   where the fallback ("6 games in the archive") does not — which pushed the
    whole card grid down 18px the moment the counts landed (measured at 320 and
    360 px). Below sm, reserve both lines up front; from sm up neither string
    wraps, so the pill keeps its natural single-line height. The breakpoint is

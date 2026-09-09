@@ -180,6 +180,56 @@ export const GAMES: ShellGame[] = [
     sitemapUrl: `${SITE_URL}/ffcotw/sitemap.xml`,
     summaryUrl: '/ffcotw/data/summary.json',
   },
+  {
+    // Game #6, appended per the note above — and the first PROMOTION out of
+    // UPCOMING since Tōkon's. Its coming-soon card is retired in this same
+    // commit, which is what the `art` swap below is really about: the announced
+    // art says "Coming soon to the Replay Database" in 40px type, so leaving it
+    // would ship a live, clickable card advertising itself as unavailable.
+    id: 'ggst',
+    // The short form, parallel to 'MARVEL Tōkon' and 'FATAL FURY: CotW'. The
+    // official title is GUILTY GEAR -STRIVE-, and its hyphen-flanked wordmark
+    // both wraps in the title column and reads as a stray dash where it breaks.
+    // The full spelling survives in the card art, which sets it in the lockup.
+    // NOTE: verify-cutover.mjs must use the FULL title in its own table — it
+    // asserts against summary.json, which the game emits with the full name.
+    name: 'Guilty Gear Strive',
+    shortName: 'STRIVE',
+    slug: 'ggst',
+    url: '/ggst',
+    // The game's theme.css --color-primary. UNCHANGED from the coming-soon
+    // card's provisional value, which is worth saying out loud because the rule
+    // is that the theme wins at flip time and Tōkon's card really did move
+    // (#00a6ff → #03a5fe): this skin resolved the gold-foil capsule to the same
+    // hex the handoff had anchored, so there was nothing to follow. Its two
+    // tight neighbours are unchanged with it — CotW's #ffd21f at Δhue 11 with
+    // ΔL .125 against a .12 floor, and the engine's umbrella --color-secondary
+    // #fbc318 at Δhue 5 with ΔL .00, separated on chroma alone. Anyone
+    // re-sampling this gold has to clear BOTH, not just the live accents.
+    accent: '#d9a53a',
+    // A byte-copy of the game repo's own public/og-default.png, the way 2XKO,
+    // Tekken, SF6 and CotW's were made. This one carries "Character art
+    // © ARC SYSTEM WORKS" baked into the image — the Fan Kit licence's
+    // Article 3.1 attribution travelling with the art onto the front door. It
+    // is the only card art here with a licence obligation attached, so it may
+    // be re-exported from that repo but never cropped past the notice.
+    // It inherits the copy-line disagreement described on `art` above: the
+    // lockup reads "Character usage · matchups · meta over time" while the
+    // tagline says something else entirely. Accepted on the same terms as the
+    // other five — ~5px on a rendered card — not overlooked.
+    art: '/img/games/ggst.png',
+    // NO hover loop, deliberately: CotW shipped its own flip without one and
+    // gained it in a later commit, and the field is optional precisely so a
+    // launch is not gated on trimming a trailer. This card shows static art.
+    // The archive's own shape is the line worth having here, and no sibling can
+    // claim it: the eight channels upload whole SETS (every one's median run
+    // is over three and a half minutes, against a ~3-minute Strive game), while
+    // the Replay Theater catalogue contributes single matches cut out of
+    // tournament VODs at an offset. Not a count, and it cannot go stale.
+    tagline: 'Whole sets, and matches cut from tournament streams',
+    sitemapUrl: `${SITE_URL}/ggst/sitemap.xml`,
+    summaryUrl: '/ggst/data/summary.json',
+  },
 ];
 
 /**
@@ -237,9 +287,17 @@ export interface UpcomingGame {
   tagline: string;
 }
 
-// Empty from 2026-08-14 (MARVEL Tōkon's promotion into GAMES) until these three
-// were announced. The narrow type above is what kept that window honest, and it
-// is what keeps these three out of the sitemap index and the ItemList now.
+// Empty from 2026-08-14 (MARVEL Tōkon's promotion into GAMES) until three games
+// were announced; two, since Guilty Gear Strive was promoted into GAMES on
+// 2026-09-09. The narrow type above is what kept that window honest, and it is
+// what keeps the remaining two out of the sitemap index and the ItemList now.
+//
+// PROMOTING ONE IS A SUBTRACTION HERE AND AN APPEND THERE, in the same commit.
+// Strive's entry did not move between the arrays: UpcomingGame and ShellGame
+// share only five of their fields, so `fullName` was DROPPED (ShellGame has no
+// such field) and `url`, `sitemapUrl` and `summaryUrl` were added. The full
+// title therefore leaves the DOM at promotion — it lives in the card art and
+// nowhere else, exactly as MARVEL Tōkon's and FATAL FURY's do.
 //
 // ORDER IS DISPLAY ORDER. Unlike GAMES — where APPEND-don't-insert protects a
 // POSITIONAL JSON-LD gate — this array reaches only the card grid, which renders
@@ -253,41 +311,12 @@ export interface UpcomingGame {
 // At flip time THE THEME WINS: Tōkon's card carried #00a6ff and the shipped skin
 // resolved to #03a5fe, and the card followed the game rather than the reverse.
 //
-// The separation rule every one of them clears, against all five live accents,
-// the umbrella teal, and each other: OKLCH Δhue ≥ 25, or Δhue ≥ 10 with
-// |ΔL| ≥ .12. It is the rule the game skins already use, and it is why FATAL
-// FURY demoted its own sampled red (11° from Tekken) to secondary.
+// The separation rule every one of them clears, against all SIX live accents
+// (Strive's gold joined that set when it was promoted), the umbrella teal, and
+// each other: OKLCH Δhue ≥ 25, or Δhue ≥ 10 with |ΔL| ≥ .12. It is the rule the
+// game skins already use, and it is why FATAL FURY demoted its own sampled red
+// (11° from Tekken) to secondary.
 export const UPCOMING: UpcomingGame[] = [
-  {
-    id: 'ggst',
-    // GUILTY GEAR -STRIVE- — developed AND published by Arc System Works,
-    // verified on guiltygear.com/ggst/en/ (© ARC SYSTEM WORKS) and
-    // arcsystemworks.com/game/guilty-gear-strive/. The vendor's own line for it
-    // is "The ever-evolving 2.5D fighting game", which is where the tagline's
-    // "ever-evolving 2.5D fighter" comes from rather than from anyone's memory.
-    // THIS IS THE ONE CARD THAT KEEPS THE ASW CREDIT. It closed the Granblue
-    // line and Tōkon's too until this pass, which had three of eight cards
-    // ending the same way; Strive is where it belongs, because ASW developed
-    // AND published this one.
-    name: 'Guilty Gear Strive',
-    fullName: 'GUILTY GEAR -STRIVE-',
-    shortName: 'STRIVE',
-    slug: 'ggst',
-    // PROVISIONAL, and the one accent here that may still move: it is
-    // --color-primary from the in-progress skin
-    // (ggst-replay-database/design/handoff/tokens.css), whose own header calls
-    // the gold anchored-but-unsampled — it comes from the gold-foil logo
-    // variant on the store capsules, not from a pixel sample.
-    // GOLD RATHER THAN THE LOGO'S RED, by that skin's collision lever: the
-    // sampled letterform red is #7b1b1e, and at any lightness that could carry
-    // text it lands on Tekken's #e13048. FATAL FURY demoted its own red for the
-    // same reason; neither game ships red-primary.
-    // Tightest neighbour is FATAL FURY's #ffd21f at Δhue 11 — cleared on
-    // lightness alone, ΔL .125, right at the .12 floor. Δhue 30 from SF6.
-    accent: '#d9a53a',
-    art: '/img/games/ggst.png',
-    tagline: "Arc System Works' ever-evolving 2.5D fighter",
-  },
   {
     id: 'avatar',
     // Avatar Legends: The Fighting Game. The studio credits are the one fact
@@ -332,11 +361,16 @@ export const UPCOMING: UpcomingGame[] = [
     // Granblue Fantasy Versus: Rising — "© Cygames, Inc. Developed by ARC
     // SYSTEM WORKS", verbatim from the footer of the official site
     // rising.granbluefantasy.jp/en/about. That single line is both credits, and
-    // the tagline carried both until this pass. It names CYGAMES ONLY now: ASW
-    // also closed the Strive line two entries up, and a reader scanning eight
-    // cards met the same four words twice. Cygames is the rights holder, which
-    // is the half that identifies the game; the ASW credit survives on Strive,
-    // where that studio is developer and publisher both.
+    // the tagline carried both until the 2026-09-06 copy pass. It names CYGAMES
+    // ONLY: ASW closed the Strive line two entries up as well, and a reader
+    // scanning eight cards met the same four words twice. Cygames is the rights
+    // holder, which is the half that identifies the game.
+    // THE REASON HAS SINCE EXPIRED AND THE LINE IS KEPT ANYWAY. Strive was
+    // promoted into GAMES on 2026-09-09 and a live card's tagline describes its
+    // ARCHIVE, not its studio, so no card names ASW now and the duplication
+    // this line was shortened to avoid cannot recur. Restoring the developer
+    // credit here would be a copy change made for a reason that no longer
+    // holds; naming the rights holder was the better line on its own merits.
     name: 'Granblue Rising',
     fullName: 'Granblue Fantasy Versus: Rising',
     shortName: 'GBVSR',
