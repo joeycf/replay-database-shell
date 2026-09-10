@@ -8,6 +8,9 @@ node_modules
 .data
 dist
 .env*
+# Documentation, and placeholders only — tracked on purpose. The negation keeps
+# that true if it is ever removed and re-added.
+!.env.example
 
 # Local agent config
 .claude/
