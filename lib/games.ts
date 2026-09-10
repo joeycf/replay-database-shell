@@ -218,9 +218,10 @@ export const GAMES: ShellGame[] = [
     // tagline says something else entirely. Accepted on the same terms as the
     // other five — ~5px on a rendered card — not overlooked.
     art: '/img/games/ggst.png',
-    // NO hover loop, deliberately: CotW shipped its own flip without one and
-    // gained it in a later commit, and the field is optional precisely so a
-    // launch is not gated on trimming a trailer. This card shows static art.
+    // 1:29-1:46 of the official "Find Your One Way" 1st Anniversary MV,
+    // trimmed to the siblings' shape: 1280×720, 30fps, muted (no audio
+    // stream at all), 17s.
+    video: '/video/games/ggst.mp4',
     // The archive's own shape is the line worth having here, and no sibling can
     // claim it: the eight channels upload whole SETS (every one's median run
     // is over three and a half minutes, against a ~3-minute Strive game), while
