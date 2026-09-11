@@ -9,3 +9,7 @@ node_modules
 .vercel
 .data
 dist
+
+# Never upload the hover videos: they are served from Blob (lib/site.ts
+# MEDIA_ORIGIN). Keeping them out of the deployment is the entire point.
+public/video/

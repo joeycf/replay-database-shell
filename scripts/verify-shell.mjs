@@ -30,6 +30,12 @@ import puppeteer from 'puppeteer-core';
  *      reachable from the footer on every page that wears one — with the
  *      footer's new left column checked for collision at phone widths.
  *   7. No page request escapes the static root (no 404s on assets).
+ *   8. Every <video> source is same-origin or on the ONE registered media
+ *      origin (lib/site.ts MEDIA_ORIGIN — the Blob store the card hover
+ *      videos moved to). Any other origin fails. The videos are
+ *      preload="none", so nothing else in this suite ever requests them:
+ *      without this check a stray CDN URL would ship unnoticed. Control:
+ *      `--control-media-origin https://not-registered.example` MUST fail.
  *
  * Chrome: /usr/bin/google-chrome-stable (STACK §5.9). Static server: local,
  * ephemeral port. Exit non-zero on any failed gate.
@@ -998,6 +1004,44 @@ try {
     path: process.env.SHOT_CHANGELOG_PATH || '/tmp/shell-changelog.png',
     fullPage: true,
   });
+
+  // ── 4b. media origin allowlist ───────────────────────────────────────────
+  // Single source of truth: the origin is READ from lib/site.ts rather than
+  // restated here, so moving the Blob store cannot leave a stale allowlist
+  // silently passing. Same-origin stays fine; exactly one remote origin is
+  // permitted, and only for <video>.
+  console.log('\n[media]');
+  const mediaOrigin = (readFileSync(new URL('../lib/site.ts', import.meta.url), 'utf8').match(
+    /export const MEDIA_ORIGIN = '([^']+)'/,
+  ) ?? [])[1];
+  check('lib/site.ts pins a MEDIA_ORIGIN', !!mediaOrigin, mediaOrigin ?? 'not found');
+
+  currentPage = '/';
+  await page.goto(`${origin}/`, { waitUntil: 'networkidle0' });
+  const videoSrcs = await page.$$eval('video', (vs) =>
+    vs.flatMap((v) => [
+      v.getAttribute('src'),
+      ...[...v.querySelectorAll('source')].map((x) => x.getAttribute('src')),
+    ]),
+  );
+  const present = videoSrcs.filter(Boolean);
+  check('selector renders card videos', present.length > 0, `${present.length} source(s)`);
+
+  // Control knob (house convention, cf. verify-badge-density.mjs
+  // --expect-badges): pass a DIFFERENT origin and the real Blob URLs become
+  // unregistered, so the check below must fail. Same code path a rogue CDN URL
+  // in lib/games.ts would take.
+  //   node scripts/verify-shell.mjs --control-media-origin https://not-registered.example
+  const controlIdx = process.argv.indexOf('--control-media-origin');
+  const ALLOWED_MEDIA = controlIdx !== -1 ? process.argv[controlIdx + 1] : mediaOrigin;
+  const offOrigin = present.filter(
+    (src) => /^[a-z]+:\/\//i.test(src) && !src.startsWith(`${ALLOWED_MEDIA}/`),
+  );
+  check(
+    'every <video> source is same-origin or on the registered media origin',
+    offOrigin.length === 0,
+    offOrigin.slice(0, 4).join(', ') || 'none',
+  );
 
   // ── 5. request hygiene ───────────────────────────────────────────────────
   console.log('\n[requests]');

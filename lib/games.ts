@@ -1,4 +1,4 @@
-import { SITE_URL } from './site';
+import { MEDIA_ORIGIN, SITE_URL } from './site';
 
 /**
  * The games the selector enumerates — the single source of truth for the
@@ -84,7 +84,7 @@ export const GAMES: ShellGame[] = [
     url: '/2xko',
     accent: '#ff2e88',
     art: '/img/games/2xko.png',
-    video: '/video/games/2xko.mp4',
+    video: `${MEDIA_ORIGIN}/video/games/2xko.mp4`,
     tagline: 'Champion duos, and the Fuse each team ran',
     sitemapUrl: `${SITE_URL}/2xko/sitemap.xml`,
     summaryUrl: '/2xko/data/summary.json',
@@ -97,7 +97,7 @@ export const GAMES: ShellGame[] = [
     url: '/tekken',
     accent: '#e13048',
     art: '/img/games/tekken.png',
-    video: '/video/games/tekken.mp4',
+    video: `${MEDIA_ORIGIN}/video/games/tekken.mp4`,
     tagline: 'Ranked play, up to God of Destruction',
     sitemapUrl: `${SITE_URL}/tekken/sitemap.xml`,
     summaryUrl: '/tekken/data/summary.json',
@@ -114,7 +114,7 @@ export const GAMES: ShellGame[] = [
     // gates compare against lowercased computed values
     accent: '#ff7d00',
     art: '/img/games/sf6.png',
-    video: '/video/games/sf6.mp4',
+    video: `${MEDIA_ORIGIN}/video/games/sf6.mp4`,
     tagline: 'Any matchup, from either side of it',
     sitemapUrl: `${SITE_URL}/sf6/sitemap.xml`,
     summaryUrl: '/sf6/data/summary.json',
@@ -145,7 +145,7 @@ export const GAMES: ShellGame[] = [
     // card follows the game, not the other way round.
     accent: '#03a5fe',
     art: '/img/games/tokon.png',
-    video: '/video/games/tokon.mp4',
+    video: `${MEDIA_ORIGIN}/video/games/tokon.mp4`,
     tagline: 'Four-fighter teams on a shared life bar',
     sitemapUrl: `${SITE_URL}/tokon/sitemap.xml`,
     summaryUrl: '/tokon/data/summary.json',
@@ -175,7 +175,7 @@ export const GAMES: ShellGame[] = [
     art: '/img/games/ffcotw.png',
     // 1:44–1:55 of the Official Special Anime Trailer, trimmed to the siblings'
     // shape: 1280×720, 30fps, muted (no audio stream at all), 11s.
-    video: '/video/games/ffcotw.mp4',
+    video: `${MEDIA_ORIGIN}/video/games/ffcotw.mp4`,
     tagline: 'Every patch since the open beta',
     sitemapUrl: `${SITE_URL}/ffcotw/sitemap.xml`,
     summaryUrl: '/ffcotw/data/summary.json',
@@ -221,7 +221,7 @@ export const GAMES: ShellGame[] = [
     // 1:29-1:46 of the official "Find Your One Way" 1st Anniversary MV,
     // trimmed to the siblings' shape: 1280×720, 30fps, muted (no audio
     // stream at all), 17s.
-    video: '/video/games/ggst.mp4',
+    video: `${MEDIA_ORIGIN}/video/games/ggst.mp4`,
     // The archive's own shape is the line worth having here, and no sibling can
     // claim it: the eight channels upload whole SETS (every one's median run
     // is over three and a half minutes, against a ~3-minute Strive game), while

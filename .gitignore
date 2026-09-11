@@ -14,3 +14,7 @@ dist
 
 # Local agent config
 .claude/
+
+# Card hover videos live in Vercel Blob (lib/site.ts MEDIA_ORIGIN), not in the
+# deployment — Vercel stores a full copy of public/ on every build.
+public/video/
