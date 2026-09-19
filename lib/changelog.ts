@@ -53,7 +53,7 @@
  * scope-to-accent mapping therefore lives in app/pages/changelog.vue.
  */
 
-/** Which part of the platform a change belongs to. The six game slugs match
+/** Which part of the platform a change belongs to. The seven game slugs match
  *  ShellGame.slug in lib/games.ts (NOT .id — Tekken's id is 'tekken8'), which
  *  is how the page finds each badge's accent. 'platform' is a change all games
  *  got at once; 'engine' and 'shell' are the shared layer and the apex.
@@ -62,7 +62,16 @@
  *  app/pages/changelog.vue. The last is a Record<Scope, string>, so omitting it
  *  is a typecheck failure rather than a badge that quietly renders its slug. */
 export type Scope =
-  'platform' | 'engine' | 'shell' | '2xko' | 'tekken' | 'sf6' | 'tokon' | 'ffcotw' | 'ggst';
+  | 'platform'
+  | 'engine'
+  | 'shell'
+  | '2xko'
+  | 'tekken'
+  | 'sf6'
+  | 'tokon'
+  | 'ffcotw'
+  | 'ggst'
+  | 'avatar';
 
 /** launch = a game or the platform itself going live · feature = something new
  *  to use · data = matches or fields arriving · improvement = something that
@@ -84,6 +93,77 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    // avatar-replay-database, launch. Every number frozen from that repo's
+    // data/replays.json and data/report.md, measured 2026-09-19: 502 published
+    // records, 366 players, 12 released fighters, 34 supports, and 33 intakes
+    // with records of which ONE is the Replay Theater index — so "32 channels
+    // and one catalogue", not 33 channels. 241 records state at least one
+    // support (48.0%). Earliest record 2026-07-24, one day after the
+    // 2026-07-23 launch build; latest 2026-09-16.
+    //
+    // EIGHT WEEKS IS THE POINT OF THE SECOND SENTENCE, and it is the one thing
+    // this row must not let a reader get wrong. Strive's entry opens on an
+    // April 2020 pre-release build and CotW's on a February 2025 beta; a
+    // visitor who has read those arrives expecting years of footage. This
+    // corpus is 54 days old. Saying so is not a hedge, it is the fact that
+    // makes the 502 legible.
+    //
+    // THE WEEKLY RATE IS MEASURED HERE, NOT INHERITED. The handoff carried a
+    // "~30-35 records a week" figure and that is LOW against this corpus: by
+    // ISO week the seven complete weeks run 39, 51, 63, 66, 73, 75 and 81, mean
+    // 64. Excluding the index intake's 152 (which arrived as a catalogue sweep
+    // rather than week by week) the same weeks run 31 to 71. Either way the
+    // honest shape is "tens of records a week, not thousands", which is what
+    // the body says and what stays true as the cron runs. A bare number would
+    // not: this file redeploys only when the shell changes.
+    //
+    // THE ROSTER COUNT IS STATED AND THE ANNOUNCED COUNT IS NOT, which reverses
+    // CotW's and Strive's rows on purpose. Those two omitted their roster
+    // entirely because a fighter number goes stale inside a season. This vendor
+    // has declared NO season and published NO date for anything announced: its
+    // own words are "over the course of the season" and "later this year", and
+    // the only "Fall 2026" anywhere is on a fan wiki. A 12 that cannot be
+    // dated out of date is therefore safe to print, and it is the number a
+    // visitor filtering by fighter actually needs. The announced count is left
+    // out because it does not resolve cleanly either: scripts/expiries.ts holds
+    // SIX unreleased rows, five named (Iroh, Ty Lee, Lin Beifong, Bolin, Tagah)
+    // and a sixth that is a SOLD BUT UNCHOSEN Year 1 vote slot. "Five more" and
+    // "six more" are both defensible and neither is worth a sentence, so the
+    // body says the shape instead.
+    //
+    // THE SUPPORT SENTENCE IS THIS GAME'S ONLY UNIQUE CLAIM and it carries its
+    // own mechanism, because the asymmetry is the interesting half: the
+    // catalogue fills its support column on 100% of rows and no title channel
+    // states a support on more than a handful of uploads, which is why 241 of
+    // 502 rather than all of them. A support is NOT a second character in this
+    // archive (that repo keeps charactersPerSide at 1 deliberately), so the
+    // sentence says "as well as a fighter" rather than naming two picks.
+    //
+    // THE SEGMENT SENTENCE IS DELIBERATELY ABSENT. 132 records are single
+    // matches cut from a tournament stream at an offset, and that IS true here
+    // — but SF6's, CotW's and Strive's rows all already say "opening one starts
+    // the video at that match rather than at the top of the bracket". A fourth
+    // identical sentence is the changelog's version of the four cards that all
+    // said "character usage · … · meta over time", and the header's "never a
+    // restatement" rule covers it. The support asymmetry earned the line
+    // instead.
+    //
+    // "JOINS" IS THE HOUSE WORD, verified rather than assumed: all five prior
+    // game launches use it (2XKO's opens, but Tekken, SF6, Tōkon, CotW and
+    // Strive all "join"), so this row matches them.
+    //
+    // EVO AND RANKED ARE BOTH LEFT OUT. Ranked Mode 1.0 landed in the
+    // 2026-09-02 patch and nothing in this corpus carries a ladder tier — the
+    // recon's 73-channel sweep found rank tokens on zero channels — so there is
+    // no rank story to tell yet, and the archive has no tournament depth worth
+    // naming at eight weeks.
+    date: '2026-09-19',
+    scope: 'avatar',
+    kind: 'launch',
+    title: 'Avatar Legends: The Fighting Game joins the archive',
+    body: 'Avatar Legends: The Fighting Game joins Replay Database with 502 records from 32 channels and one catalogue of tournament streams, covering 366 players and all 12 fighters released so far. It is eight weeks of footage rather than years of it: the first record is the day after the July 2026 launch and the last is mid-September, and the archive gains tens of records a week, not thousands. More fighters are announced and the vendor has published a date for none of them, so the roster here is what has shipped rather than what was promised. Every side carries a support as well as a fighter, and 241 records name one, because the catalogue states the support on every row where the channels almost never do.',
+  },
   {
     // ggst-replay-database, launch. Every number frozen from that repo's
     // data/replays.json on 2026-09-09: 24,706 published records, 7,966 of which

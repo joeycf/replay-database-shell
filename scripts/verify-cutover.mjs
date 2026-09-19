@@ -95,6 +95,23 @@ const GAMES = [
     // makes its ComboForge deep links derive; a bare 'sol' here would 404.
     charPath: '/ggst/characters/sol-badguy',
   },
+  {
+    slug: 'avatar',
+    id: 'avatar',
+    // The FULL title, compared against summary.json's `name`. The selector card
+    // uses the short 'Avatar Legends'; this is the one place the full
+    // "Avatar Legends: The Fighting Game" spelling is asserted outside the card
+    // art and the page description.
+    name: 'Avatar Legends: The Fighting Game',
+    primary: '#4ec0ed',
+    // Keeps the engine's default 'characters' segment — that game's app.config.ts
+    // leaves `terms` unset because the vendor, the partner site and the index
+    // source all say "character". The ids are the handoff's SHORT forms, which
+    // reverses CotW's and Strive's full-name-kebab convention on purpose
+    // (measured on this game's ComboForge entry), so 'toph' resolves and
+    // 'toph-beifong' would 404.
+    charPath: '/avatar/characters/toph',
+  },
 ];
 
 /**
@@ -105,14 +122,12 @@ const GAMES = [
  * ItemList and the sitemap index. Used only by the selector checks.
  * ORDER MATTERS: the cards are asserted positionally against this.
  */
-const UPCOMING = [
-  { slug: 'avatar', name: 'Avatar Legends' },
-  { slug: 'gbvsr', name: 'Granblue Rising' },
-];
+const UPCOMING = [{ slug: 'gbvsr', name: 'Granblue Rising' }];
 
 /** Web Analytics proxy prefix per game — each is one rewrite in this repo's
  *  vercel.json AND one `observability.insights` in that game's app.config.ts.
- *  Restated here so gate 6 fails loudly if any of the four drifts. */
+ *  Derived from the slug rather than restated, so gate 6 covers every game in
+ *  GAMES above and fails loudly if any of the seven pairs drifts. */
 const INSIGHTS_PREFIX = (slug) => `/${slug}-insights`;
 /** Speed Insights is single-project on Hobby: every game reports to whichever
  *  project owns the apex path, so this one is NOT per-game. */
@@ -170,6 +185,7 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     '/tokon/sitemap.xml',
     '/ffcotw/sitemap.xml',
     '/ggst/sitemap.xml',
+    '/avatar/sitemap.xml',
   ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }
@@ -372,13 +388,9 @@ try {
   }));
   check(`selector wears the umbrella teal (${sel.primary})`, sel.primary === '#17cfc8');
   check(
-    `cards link /2xko + /tekken + /sf6 + /tokon + /ffcotw + /ggst`,
-    sel.cards.includes('/2xko') &&
-      sel.cards.includes('/tekken') &&
-      sel.cards.includes('/sf6') &&
-      sel.cards.includes('/tokon') &&
-      sel.cards.includes('/ffcotw') &&
-      sel.cards.includes('/ggst'),
+    `cards link ${GAMES.map((g) => `/${g.slug}`).join(' + ')}`,
+    GAMES.every((g) => sel.cards.includes(`/${g.slug}`)),
+    JSON.stringify(sel.cards),
   );
   check(
     `${GAMES.length} NAVIGABLE cards and no more (a.game-card=${sel.cards.length}, .game-card=${sel.gameCardClass})`,

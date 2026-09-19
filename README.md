@@ -48,7 +48,7 @@ static leaf.)
   matched on `slug`. It is the one page here with editorial content, and the one
   route that must be named in `nitro.prerender.routes` — see the standing rule on
   `crawlLinks`. The **footer** link to it lives in the engine's `SiteFooter`
-  (v0.7.1) rather than here, so it reaches the four games too; it is an absolute
+  (v0.7.1) rather than here, so it reaches every game too; it is an absolute
   apex URL for that reason, and the shell briefly carried its own footer
   override to ship the link before that release.
 - **The router** (`vercel.json`) — external rewrites proxy `/2xko/*` and
@@ -109,7 +109,7 @@ and there is no `NUXT_APP_BASE_URL` dance here — that's a game-app concern.
 | `npm run verify:cutover <host>`                  | The post-cutover battery against a **live** host (defaults to replaydatabase.com)  |
 | `node scripts/simulate-topology.mjs`             | Serve the built shell behind a faithful local implementation of `vercel.json`      |
 | `node scripts/card-art-tokon.mjs`                | One-off: the Tōkon coming-soon card art, kept as its provenance. Not in the build  |
-| `node scripts/card-art-upcoming.mjs [slug…]`     | Card art for the `UPCOMING` games (all three by default). Not wired into the build |
+| `node scripts/card-art-upcoming.mjs [slug…]`     | Card art for the `UPCOMING` games (every register, bare). Not wired into the build |
 
 ## Verification
 
@@ -194,9 +194,9 @@ checking that limit first.
    JSON-LD, and the sitemap index all pick it up from here.
    **The tagline names what THIS archive holds that its neighbours' do not** —
    2XKO's Fuse facet, Tekken's ladder, Tōkon's four-fighter sides, CotW's patch
-   depth. Do not describe it from the key art; copying the art is how four of
-   five cards once ended up as variations on "Character usage · … · meta over
-   time". Never a number that grows (roster size, patch count, replay total):
+   depth, Avatar's support namespace. Do not describe it from the key art;
+   copying the art is how four of five cards once ended up as variations on
+   "Character usage · … · meta over time". Never a number that grows (roster size, patch count, replay total):
    this file bakes into static HTML that only redeploys when the shell changes,
    so a count here goes stale unattended, and the card already shows the live
    number from the game's own `summary.json`. Two lines maximum, ≤60 characters
@@ -261,14 +261,25 @@ A game that has been announced but has no replays yet goes in **`UPCOMING`**, no
    Mind the date gate's regex when you write one: it rejects a month prefix
    followed by a number, so "Marvel 4v4" and "May 2 fighters" both fail it even
    though neither is a date.
-5. **The accent has to clear every shipped accent, and the other upcoming ones.**
-   The rule the game skins use: OKLCH Δhue ≥ 25, or Δhue ≥ 10 with |ΔL| ≥ .12,
-   and at least AA on the card ground (Tekken's `#e13048` is the floor at
-   4.50:1 — the badge sets 11px text in this colour). Occupied hues today:
-   2XKO 2 · Tekken 20 · SF6 52 · Strive 82 · CotW 93 · umbrella teal 190 ·
-   Tōkon 244 · Granblue 272 · Avatar 284. FATAL FURY and Strive both demoted
-   their own sampled reds for landing ~11° from Tekken; assume the obvious
-   sample is taken and check before committing to it.
+5. **The accent should clear every shipped accent, and this is now advisory
+   across games.** The rule the game skins use: OKLCH Δhue ≥ 25, or Δhue ≥ 10
+   with |ΔL| ≥ .12, and at least AA on the card ground (Tekken's `#e13048` is the
+   floor at 4.50:1 — the badge sets 11px text in this colour). The **2026-09-15
+   colour policy** demoted the cross-game half of that to a preference: a game
+   with a clear colour identity uses it, and a cross-game primary collision is
+   accepted, because the two surfaces where games meet — this grid and the
+   changelog badges — carry wordmarks, art and text labels that do the
+   identifying. What still **binds** is separation INSIDE a skin (primary vs
+   secondary vs status at chip size, roster accents against each other) and AA
+   everywhere, plus a soft preference against matching the umbrella teal, which
+   the platform-scoped changelog items wear. Occupied hues today, live accents
+   first: 2XKO 2 · Tekken 20 · SF6 52 · Strive 82 · CotW 93 · umbrella teal 190
+   · Avatar 228 · Tōkon 244 · Granblue 272. Avatar's is the live pair that does
+   not clear the rule (Δhue 16.2 / ΔL .066 from Tōkon) and it shipped under the
+   new policy on 2026-09-19; its coming-soon card had sat at 284 and followed the
+   skin at flip. FATAL FURY and Strive both demoted their own sampled reds for
+   landing ~11° from Tekken, under the old rule, and neither is being revisited.
+   Assume the obvious sample is taken and check before committing to it.
 6. `npm run generate && npm run verify:shell` — the gates assert one `ItemList`
    entry per LIVE game and one sitemap child per live game plus the page
    sitemap (an upcoming game adds to neither), that every upcoming card has no
@@ -283,8 +294,22 @@ before that game had a repo. Both are deliberately not wired into the build —
 `npm run generate` must not need Chrome.
 
 **Promotion at launch is a move, not a copy:** when the pipeline ships, the entry
-leaves `UPCOMING`, joins `GAMES` (appending), gains the three URL fields, and
-takes the `vercel.json` rewrite pair per the section above.
+leaves `UPCOMING`, joins `GAMES` (appending), drops `fullName` (`ShellGame` has
+no such field, so the full title leaves the DOM and lives in the card art), gains
+the three URL fields, and takes the `vercel.json` rewrite pair **and** the
+insights rewrite per the section above. Two more edits belong in the same commit
+and neither is implied by the type:
+
+- **Replace `public/img/games/<slug>.png`** with a byte-for-byte copy of the game
+  repo's own `public/og-default.png` (`cp` then `cmp`). The coming-soon tile reads
+  "Coming soon to the Replay Database" in 40px type, so a promoted card that kept
+  it would be a live, clickable card advertising itself as unavailable.
+- **Delete the game's register from `scripts/card-art-upcoming.mjs`.** Its bare
+  default run renders every register it still holds and writes straight over
+  `public/img/games/<slug>.png`, so a register for a live game is a standing
+  instruction to undo the swap above. Take any texture that register was the last
+  consumer of with it. `ggst`'s register is still present and Strive has been live
+  since 2026-09-09 — a known hazard, not a precedent.
 
 ## Maintaining the changelog
 

@@ -1,17 +1,32 @@
 // Selector card art for the UPCOMING games — public/img/games/<slug>.png,
-// 1200×630, the same size and role as the five live cards.
+// 1200×630, the same size and role as the seven live cards.
 //
-//   node scripts/card-art-upcoming.mjs            # all three
-//   node scripts/card-art-upcoming.mjs ggst       # one
+//   node scripts/card-art-upcoming.mjs            # every register below
+//   node scripts/card-art-upcoming.mjs gbvsr      # one
 //
-// ONE script with three registers, not three copies. scripts/card-art-tokon.mjs
-// is the original of this pattern and stays untouched: it is the only record of
-// how the shipped tokon.png was made before that game got a repo of its own.
-// Everything structural here — the ink ground, the 10px border and its inset
-// paper rule, the notched accent tile, the SHORT/REPLAY lockup, the
-// "Coming soon" line, the letterspaced kicker, the bottom strip — is that
-// script's, so the eight tiles read as one set. What varies per game is the
-// TEXTURE behind the type, and it varies as data (see REGISTERS).
+// ONE script with a register per announced game, not a copy per game.
+// scripts/card-art-tokon.mjs is the original of this pattern and stays
+// untouched: it is the only record of how the shipped tokon.png was made before
+// that game got a repo of its own. Everything structural here — the ink ground,
+// the 10px border and its inset paper rule, the notched accent tile, the
+// SHORT/REPLAY lockup, the "Coming soon" line, the letterspaced kicker, the
+// bottom strip — is that script's, so the tiles read as one set. What varies
+// per game is the TEXTURE behind the type, and it varies as data (see
+// REGISTERS).
+//
+// A PROMOTED GAME'S REGISTER COMES OUT IN THE FLIP COMMIT. The default run
+// renders EVERY register it finds and writes straight over
+// public/img/games/<slug>.png, so a register for a live game is a standing
+// instruction to replace that game's card art with a tile reading "Coming soon
+// to the Replay Database". Avatar's register was deleted on 2026-09-19 for
+// exactly that reason, together with the `elemental` texture that nothing else
+// reached.
+//
+// ggst's REGISTER IS STILL HERE AND STRIVE HAS BEEN LIVE SINCE 2026-09-09. That
+// is a known hazard, left alone deliberately by the Avatar flip rather than
+// overlooked: a bare `node scripts/card-art-upcoming.mjs` today would overwrite
+// a live game's card art. Pass the slug you mean until somebody retires that
+// register.
 //
 // Like its predecessor this is deliberately NOT wired into build/generate:
 // `npm run generate` must not need Chrome. Run it by hand, commit the PNGs.
@@ -19,8 +34,8 @@
 // at the same paths with no code change.
 //
 // TRADEMARKS. Type, colour and pattern only — no logo, no wordmark lockup, no
-// character art, no licensed image. The same fan-project rule the five live
-// cards follow. Note the temptation and the answer: an official Strive logo
+// character art, no licensed image. The same fan-project rule the live cards
+// follow. Note the temptation and the answer: an official Strive logo
 // sits on this machine at ggst-replay-database/design/handoff/GGStrive_Logo.webp
 // and is NOT embedded here. Official art is a SAMPLING source for the accents
 // below and never an asset.
@@ -71,10 +86,15 @@ const SUBSETS = [
 ];
 
 /**
- * The three registers. `short` + `kicker` + `soon` are the only text; the rest
- * is colour and texture parameters. A register never introduces a new layout —
- * `texture()` returns background layers that sit BEHIND the shared type block,
- * so a bad texture can make a card ugly but never illegible.
+ * The registers, one per game that still has a Coming Soon card. `short` +
+ * `kicker` are the only text; the rest is colour and texture parameters. A
+ * register never introduces a new layout — `texture()` returns background layers
+ * that sit BEHIND the shared type block, so a bad texture can make a card ugly
+ * but never illegible.
+ *
+ * ADDING ONE adds a texture below if it needs a new register; REMOVING one (a
+ * promotion) takes its texture with it when nothing else reaches it, which is
+ * how `elemental` left with Avatar's register on 2026-09-19.
  */
 const REGISTERS = {
   ggst: {
@@ -92,28 +112,6 @@ const REGISTERS = {
     // Metal and stencil: milled brush, a raking sheen, and cut slits. Guilty
     // Gear's own UI language is machined metal and heavy stencil type.
     texture: { kind: 'metal', brush: 7, sheen: 0.3, slits: 11 },
-  },
-  avatar: {
-    short: 'AVATAR',
-    kicker: 'AVATAR LEGENDS: THE FIGHTING GAME &nbsp;·&nbsp; PARAMOUNT &times; GAMEPLAY GROUP',
-    // Sampled from the official site's own logo and key art
-    // (avatarfighters.com). NOTE for whoever revisits this: the logo on
-    // paramountgames.com (/avatar-assets/brand/avatar-logo-clean.png) and all
-    // four element seals are pure WHITE line art on transparent — zero chroma,
-    // no accent to take. The dusk indigo below is 54.3% of the flat fills in
-    // the avatarfighters logo, sampled #363c88, lifted L .395 → .778 to clear
-    // AA on the card and the selector badge.
-    accent: '#aeacff',
-    accent2: '#62c0f3',
-    // Four elements, four quadrant washes — the one thing every Avatar surface
-    // agrees on. Each wash is a sampled fill from the same two assets:
-    // air/saffron #f9bd6d, water/sky #62c0f3, earth/sage #d1deb2,
-    // fire/vermilion #e91b04.
-    texture: {
-      kind: 'elemental',
-      quadrants: ['#f9bd6d', '#62c0f3', '#d1deb2', '#e91b04'],
-      ring: 26,
-    },
   },
   gbvsr: {
     short: 'GBVSR',
@@ -153,30 +151,6 @@ const TEXTURES = {
               }).join(',')});"></div>
   <div style="position:absolute;inset:0;background:${INK};
               clip-path:polygon(0 70%,100% 64%,100% 66%,0 72%);"></div>`,
-
-  elemental: (r) => {
-    const [air, water, earth, fire] = r.texture.quadrants;
-    const q = (color, poly, op) =>
-      `<div style="position:absolute;inset:0;background:${color};opacity:${op};clip-path:polygon(${poly});"></div>`;
-    // Four elements, four quadrants — but every INK gutter sits below 58%,
-    // clear of the type block, which ends at ~54%. card-art-tokon.mjs's rule:
-    // a panel edge that ran through the wordmark would just be a diagonal
-    // through the words. Above the fold the two upper washes meet on a soft
-    // colour boundary instead, which the wordmark can sit over safely.
-    return `
-  ${q(air, '0 0,50% 0,50% 58%,0 54%', 0.15)}
-  ${q(water, '50% 0,100% 0,100% 54%,50% 58%', 0.17)}
-  ${q(earth, '0 58%,50% 62%,50% 100%,0 100%', 0.14)}
-  ${q(fire, '50% 62%,100% 58%,100% 100%,50% 100%', 0.13)}
-  <div style="position:absolute;inset:0;background:${INK};
-              clip-path:polygon(0 54%,50% 58%,100% 54%,100% 56.5%,50% 60.5%,0 56.5%);"></div>
-  <div style="position:absolute;inset:0;background:${INK};
-              clip-path:polygon(49.6% 58%,50.4% 58%,50.4% 100%,49.6% 100%);"></div>
-  <!-- The four-nations ring, off-centre so it never haloes the wordmark. -->
-  <div style="position:absolute;inset:0;opacity:.22;
-              background:repeating-radial-gradient(circle at 84% 26%, ${r.accent} 0 1.5px, transparent 1.5px ${r.texture.ring}px);
-              -webkit-mask-image:radial-gradient(circle at 84% 26%, rgba(0,0,0,.9), transparent 62%);"></div>`;
-  },
 
   ornate: (r) => `
   <!-- Crossed lattice: an illuminated border's diamond fill, drawn as two

@@ -165,19 +165,31 @@
              The affordance is therefore the PERSISTENT badge — always rendered,
              always in the accessibility tree — not a hover reveal, which would
              leave the card looking simply broken on touch.
-             NO REGIME HAS A MIXED ROW TODAY, and this comment used to claim
-             every one did. That was true at five live cards and three
-             announced; Strive's promotion on 2026-09-09 made it six and two,
-             which packs as [3,3][2] at 3-up and [2,2,2][2] at 2-up — every row
-             is all-live or all-announced, and at 1-up nothing shares a row at
-             all. So the reserved .count-slot below is DORMANT, not load-bearing,
-             and nothing in the gates would notice if it were deleted: the
-             `every grid row is level` check passes either way while the counts
-             happen to be even. It stays because the next promotion or the next
-             announcement re-creates the mixed row — it was dormant from Tōkon's
-             promotion until CotW's launch for exactly the same reason — and
-             because a card that changes height when its neighbour's count
-             resolves is the regression it was written to prevent. -->
+             EVERY MULTI-COLUMN REGIME HAS A MIXED ROW AGAIN. At six live and
+             two announced (Strive's flip, 2026-09-09) no row mixed the two
+             kinds; Avatar's promotion on 2026-09-19 makes it SEVEN live and ONE
+             announced, and [3,3][2] at 3-up and [2,2,2][2] at 2-up both put the
+             last announced card beside the last LIVE one. So the reserved
+             .count-slot below is levelling against a card that renders a replay
+             count rather than against another blank.
+             AND THE GATES STILL WOULD NOT CATCH ITS REMOVAL — measured on this
+             flip rather than reasoned about, because the comment that stood
+             here got the mechanism wrong twice. Collapse .count-slot to zero,
+             rebuild, and verify-shell's `every grid row is level` check passes
+             at 640, 1024, 1280 and 1440 exactly as before: the section is a
+             CSS grid with the default `align-items: stretch`, so every item in
+             a row is stretched to that row's height whatever is inside it. The
+             mixed row changes nothing about that. The only measurable
+             difference is at 1-up, where each card is its own row and stretch
+             has nothing to equalize: the announced card drops 310px → 290px,
+             and no gate reads it.
+             IT STAYS ANYWAY, and the reason is the one thing stretch does not
+             fix: inside a stretched card the text block is bottom-anchored
+             (`justify-end`), so without the reservation the announced card's
+             title and tagline sit 20px lower than its row-mate's. That is the
+             visible regression, it is not a row height, and it is why the
+             CotW-era "load-bearing" and Strive-era "dormant" readings were both
+             arguing about the wrong measurement. -->
         <article
           v-for="u in upcoming"
           :key="u.id"
@@ -218,10 +230,13 @@
               u.tagline
             }}</span>
             <!-- Matches the live cards' reserved count line so this card's
-                 height stays theirs. At six live and two announced it levels
-                 against the other announced card — another blank — because no
-                 regime pairs a live card with an announced one any more; see
-                 the grid comment above for why it is kept regardless.
+                 own intrinsic height stays theirs. At seven live and one
+                 announced it sits beside a LIVE card carrying a rendered replay
+                 count, in both the 2-up and the 3-up regime. What it buys is
+                 NOT the row height (grid stretch already equalizes that, and
+                 the gates prove nothing here — see the measurement in the grid
+                 comment above): it is the position of this card's
+                 bottom-anchored text block, which drops 20px without it.
                  NOT class="count" — that's a gate hook and the gates count
                  non-empty ones.
                  Its live counterpart shares its row with the "Browse →" CTA;
@@ -363,7 +378,7 @@ useSiteMeta({
     // LIVE games only. The announced ones on the selector stay out: this is the
     // search snippet, and promising a game a visitor cannot browse is the same
     // lie the UPCOMING type forbids in the sitemap and the ItemList.
-    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6, MARVEL Tōkon, FATAL FURY: City of the Wolves and Guilty Gear Strive — character usage, matchups, pairings, and meta over time, all in one place.',
+    'The competitive fighting-game replay archive. Browse and filter replays for 2XKO, Tekken 8, Street Fighter 6, MARVEL Tōkon, FATAL FURY: City of the Wolves, Guilty Gear Strive and Avatar Legends: The Fighting Game — character usage, matchups, pairings, and meta over time, all in one place.',
 });
 
 // ItemList JSON-LD enumerating the games (PLAN §5 A.6) — the apex's structured
@@ -427,12 +442,13 @@ useJsonLd([
 }
 /* The hero pill swaps its text client-side too, and the upgraded string
    ("39,189 replays across 5 games" as measured when this was written — LIVE
-   games only, announced ones never reach this count; it reads six games and a
-   far larger total since Strive) wraps to two lines on narrow viewports
-   where the fallback ("6 games in the archive") does not — which pushed the
-   whole card grid down 18px the moment the counts landed (measured at 320 and
-   360 px). Below sm, reserve both lines up front; from sm up neither string
-   wraps, so the pill keeps its natural single-line height. The breakpoint is
+   games only, announced ones never reach this count; it reads seven games and a
+   far larger total since Strive and Avatar) wraps to two lines on narrow
+   viewports where the fallback ("7 games in the archive") does not — which
+   pushed the whole card grid down 18px the moment the counts landed (measured at
+   320 and 360 px). Below sm, reserve both lines up front; from sm up neither
+   string wraps, so the pill keeps its natural single-line height. The breakpoint
+   is
    deliberately the sm boundary rather than the exact wrap width, which migrates
    upward as the archive total gains digits. */
 .aggregate {
