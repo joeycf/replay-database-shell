@@ -12,9 +12,9 @@ import puppeteer from 'puppeteer-core';
  *      ReplayDB teal), BrandLogo lockup, one card per game with its own accent,
  *      plain-<a> hrefs at /2xko | /tekken, NO game nav (Browse/Stats/…), plus
  *      the non-navigable "Coming Soon" card (ONE, since Strive's promotion
- *      took the count to two and Granblue Rising's took it to one) whose badge
- *      is present in the prerendered HTML without hover or JS, announcing its
- *      own game.
+ *      took the count to two, Granblue Rising's to one and Avatar's to ZERO).
+ *      With none announced the gate asserts ABSENCE: no upcoming card renders
+ *      and "Coming Soon" appears nowhere in the prerendered HTML.
  *   2. ItemList JSON-LD parses and enumerates the live games at apex URLs — and the
  *      sitemap index lists exactly the games that HAVE replays. An
  *      announced-but-unshipped game must reach neither (see lib/games.ts).
@@ -142,6 +142,22 @@ const SUMMARIES = {
     characters: 40,
     updated: '2026-10-01',
   },
+  // Eighth contributor, one digit further left again: the eight counts sum to
+  // 87,654,321,234, so every digit position still identifies exactly one game.
+  //
+  // `name`, `characters` and `updated` are the REAL ones from that repo's
+  // data/summary.json (12 fighters, 2026-09-30, read when this branch was
+  // rebased onto Granblue's flip) while `replays` and `players` stay synthetic.
+  // The real count was 651; using it would make the aggregate assertions pass
+  // on a number that moves with the game's cron.
+  avatar: {
+    game: 'avatar',
+    name: 'Avatar Legends: The Fighting Game',
+    replays: 80000000000,
+    players: 800,
+    characters: 12,
+    updated: '2026-09-30',
+  },
 };
 /**
  * The changelog, as lib/changelog.ts declares it. Restated rather than imported
@@ -157,20 +173,17 @@ const SUMMARIES = {
  * so reordering lib/games.ts fails here rather than silently reshuffling the
  * front door.
  */
-const UPCOMING = [
-  {
-    slug: 'avatar',
-    name: 'Avatar Legends',
-    fullName: 'Avatar Legends: The Fighting Game',
-    accent: '#aeacff',
-  },
-];
+// EMPTY since Avatar's promotion: every announced game is live. This is the
+// empty-UPCOMING gate the 2026-09-29 summary stop moved to this flip — with
+// UPCOMING_COUNT at 0, "N upcoming cards render" and "Coming Soon appears N× in
+// the PRERENDERED html" below assert the ABSENCE of any coming-soon card.
+const UPCOMING = [];
 
 // Derived from the table the page itself renders, so adding a game updates the
 // gate and the page together rather than leaving a literal to go stale.
 const GAME_COUNT = Object.keys(SUMMARIES).length;
 const UPCOMING_COUNT = UPCOMING.length;
-const CHANGELOG_ENTRIES = 37;
+const CHANGELOG_ENTRIES = 38;
 const CHANGELOG_NEWEST = '2026-10-01';
 const CHANGELOG_NEWEST_TEXT = '1 Oct';
 
@@ -297,6 +310,7 @@ try {
   const cotw = cards.find((c) => c.href === '/ffcotw');
   const ggst = cards.find((c) => c.href === '/ggst');
   const gbvsr = cards.find((c) => c.href === '/gbvsr');
+  const avatar = cards.find((c) => c.href === '/avatar');
   check(
     `2XKO card: href=/2xko, accent #ff2e88, art loads`,
     !!two && two.accent === '#ff2e88' && two.name === '2XKO' && two.artLoaded,
@@ -331,6 +345,14 @@ try {
   check(
     `Granblue card: href=/gbvsr, accent #4da6ff, art loads`,
     !!gbvsr && gbvsr.accent === '#4da6ff' && gbvsr.name === 'Granblue Rising' && gbvsr.artLoaded,
+  );
+  // The SHORT name again, as Tōkon's, CotW's, Strive's and Granblue's are. The accent is the
+  // one thing here that CHANGED at promotion: the coming-soon card carried the
+  // provisional #aeacff and the shipped skin's --color-primary is #4ec0ed, so
+  // this assertion is what proves the card followed the game.
+  check(
+    `Avatar card: href=/avatar, accent #4ec0ed, art loads`,
+    !!avatar && avatar.accent === '#4ec0ed' && avatar.name === 'Avatar Legends' && avatar.artLoaded,
   );
 
   // The card-count selector above is ANCHOR-scoped (`a.game-card`). Assert the
@@ -402,7 +424,8 @@ try {
       itemList.itemListElement[3].url === 'https://replaydatabase.com/tokon' &&
       itemList.itemListElement[4].url === 'https://replaydatabase.com/ffcotw' &&
       itemList.itemListElement[5].url === 'https://replaydatabase.com/ggst' &&
-      itemList.itemListElement[6].url === 'https://replaydatabase.com/gbvsr',
+      itemList.itemListElement[6].url === 'https://replaydatabase.com/gbvsr' &&
+      itemList.itemListElement[7].url === 'https://replaydatabase.com/avatar',
     JSON.stringify(itemList),
   );
   // THE load-bearing guard for coming-soon games. An upcoming game in
@@ -410,10 +433,10 @@ try {
   // games that actually have replays and nothing else. lib/games.ts makes that
   // structural (UpcomingGame has no `url` field at all) — this proves it holds.
   // Substring match on the slug, which is safe here and worth re-checking every
-  // time the arrays move: 'avatar' occurs inside no live game's name or URL. It
-  // stopped needing to hold for 'gbvsr' on 2026-10-01, when that slug became a
-  // live one — and this check reads UPCOMING, so a promoted slug is out of
-  // scope by construction rather than by luck.
+  // time the arrays move. WITH UPCOMING EMPTY it has nothing to look for and
+  // passes vacuously; it re-arms at the next announcement. 'gbvsr' (2026-10-01)
+  // and 'avatar' (this commit) both became live slugs, and the check reads
+  // UPCOMING, so a promoted slug is out of scope by construction.
   const itemListJson = JSON.stringify(itemList?.itemListElement ?? []).toLowerCase();
   check(
     `ItemList carries NO upcoming game (${UPCOMING.map((u) => u.slug).join(', ')})`,
@@ -431,7 +454,7 @@ try {
     `sitemap index lists exactly ${GAME_COUNT} game children + the page sitemap (${sitemapChildren.length})`,
     sitemapChildren.length === GAME_COUNT + 1 &&
       sitemapChildren.includes('https://replaydatabase.com/sitemap-pages.xml') &&
-      ['2xko', 'tekken', 'sf6', 'tokon', 'ffcotw', 'ggst', 'gbvsr'].every((s) =>
+      ['2xko', 'tekken', 'sf6', 'tokon', 'ffcotw', 'ggst', 'gbvsr', 'avatar'].every((s) =>
         sitemapChildren.includes(`https://replaydatabase.com/${s}/sitemap.xml`),
       ),
     sitemapChildren.join(', '),
@@ -740,14 +763,27 @@ try {
   // possibly the last, and cards sharing a row level with each other. An odd
   // game count leaves a gap in the final row and that is a fact about counting,
   // not a defect; a card that is narrower than its neighbours is a defect.
-  // Equal widths is the "not squeezed" half; equal row heights is what the
-  // upcoming card's reserved .count-slot buys. NOTE that seven live and one
-  // announced RESTORES a mixed row in both multi-column regimes (3-up packs
-  // [3,3][2], 2-up packs [2,2,2][2], and the last row pairs the announced card
-  // with a live one), where six and two had none. Whether the reservation is
-  // what levels that row is a separate question: the held avatar-flip branch
-  // measured that it is not (the grid's default align-items: stretch levels a
-  // row regardless) — reconcile this comment with that one when it rebases.
+  // Equal widths is the "not squeezed" half. Equal ROW HEIGHTS is the half this
+  // comment has twice credited to the upcoming card's reserved .count-slot, and
+  // that attribution is wrong — measured on the 2026-09-19 Avatar flip by
+  // collapsing .count-slot to zero, rebuilding, and re-running this file. The
+  // level check below passed at 640, 1024, 1280 and 1440 exactly as it does
+  // now. The section is a CSS grid with the default `align-items: stretch`, so
+  // a row's items are stretched to that row's height whatever is inside them,
+  // and a mixed row does not change it. THE GATES CANNOT CATCH THE
+  // RESERVATION'S REMOVAL IN ANY REGIME, and the "load-bearing at CotW,
+  // dormant at Strive" history recorded here was never measuring the thing it
+  // named.
+  //
+  // What the reservation actually buys is the position of the announced card's
+  // bottom-anchored text block, which drops 20px without it, plus that card's
+  // own intrinsic height at 1-up (310px → 290px, where stretch has nothing to
+  // equalize because each card is its own row). Neither is asserted here.
+  //
+  // Eight live and ZERO announced has no announced card at all (3-up packs
+  // [3,3,2], 2-up packs [2,2,2,2]); seven and one, at Granblue's flip, had put
+  // the announced card beside a live one. Worth knowing for the layout, not a
+  // gate.
   //
   // `grid.children` counts EVERY grid child, live and upcoming — so this is the
   // count that must be the total, not GAME_COUNT. It is also the ONLY clause
@@ -933,9 +969,10 @@ try {
   // umbrella teal for the platform-wide scopes. Fewer means a scope silently
   // fell through to the fallback (the tekken8-vs-tekken trap: lib/games.ts keys
   // on `id`, the changelog on `slug`). Derived from GAME_COUNT rather than
-  // restated, because a sixth game is a NEW COLOUR here and the literal 6 this
-  // used to assert would have failed on the count while saying nothing about
-  // the cause.
+  // restated, because every new game is a NEW COLOUR here and the literal 6 this
+  // used to assert would have failed on the count while saying nothing about the
+  // cause. Two games have landed since it was derived and neither needed an edit
+  // here, which is the property that was being bought.
   check(
     `every entry carries a scope badge (${log.badgeColors.length})`,
     log.badgeColors.length === CHANGELOG_ENTRIES,

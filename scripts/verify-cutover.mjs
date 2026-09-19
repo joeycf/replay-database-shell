@@ -110,6 +110,23 @@ const GAMES = [
     // this page carries the EX facet's chip.
     charPath: '/gbvsr/characters/gran',
   },
+  {
+    slug: 'avatar',
+    id: 'avatar',
+    // The FULL title, compared against summary.json's `name`. The selector card
+    // uses the short 'Avatar Legends'; this is the one place the full
+    // "Avatar Legends: The Fighting Game" spelling is asserted outside the card
+    // art and the page description.
+    name: 'Avatar Legends: The Fighting Game',
+    primary: '#4ec0ed',
+    // Keeps the engine's default 'characters' segment — that game's app.config.ts
+    // leaves `terms` unset because the vendor, the partner site and the index
+    // source all say "character". The ids are the handoff's SHORT forms, which
+    // reverses CotW's and Strive's full-name-kebab convention on purpose
+    // (measured on this game's ComboForge entry), so 'toph' resolves and
+    // 'toph-beifong' would 404.
+    charPath: '/avatar/characters/toph',
+  },
 ];
 
 /**
@@ -120,12 +137,16 @@ const GAMES = [
  * ItemList and the sitemap index. Used only by the selector checks.
  * ORDER MATTERS: the cards are asserted positionally against this.
  */
-const UPCOMING = [{ slug: 'avatar', name: 'Avatar Legends' }];
+// EMPTY since Avatar's promotion: every announced game is live. The checks that
+// read this array then assert ABSENCE — "Coming Soon" appears 0× in the served
+// HTML and the apex renders 0 upcoming cards — which is the empty-UPCOMING gate
+// the 2026-09-29 summary stop moved to this flip.
+const UPCOMING = [];
 
 /** Web Analytics proxy prefix per game — each is one rewrite in this repo's
  *  vercel.json AND one `observability.insights` in that game's app.config.ts.
  *  Derived from the slug rather than restated, so gate 6 covers every game in
- *  GAMES above and fails loudly if any of the seven pairs drifts. */
+ *  GAMES above and fails loudly if any of the eight pairs drifts. */
 const INSIGHTS_PREFIX = (slug) => `/${slug}-insights`;
 /** Speed Insights is single-project on Hobby: every game reports to whichever
  *  project owns the apex path, so this one is NOT per-game. */
@@ -184,6 +205,7 @@ console.log(`\nhost: ${HOST}\n\n[static + redirects]`);
     '/ffcotw/sitemap.xml',
     '/ggst/sitemap.xml',
     '/gbvsr/sitemap.xml',
+    '/avatar/sitemap.xml',
   ]) {
     check(`  index lists ${APEX}${s}`, index.includes(`${APEX}${s}`));
   }

@@ -40,6 +40,10 @@ const GAME_DIRS = {
   ),
   'ggst-replay-database.vercel.app': join(ROOT, '../ggst-replay-database/.vercel/output/static'),
   'gbvsr-replay-database.vercel.app': join(ROOT, '../gbvsr-replay-database/.vercel/output/static'),
+  'avatar-replay-database.vercel.app': join(
+    ROOT,
+    '../avatar-replay-database/.vercel/output/static',
+  ),
 };
 const CONFIG = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
 

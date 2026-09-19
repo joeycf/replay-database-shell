@@ -29,6 +29,7 @@ const SCOPES = [
   'ffcotw',
   'ggst',
   'gbvsr',
+  'avatar',
 ];
 const KINDS = ['launch', 'feature', 'data', 'improvement'];
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
