@@ -85,6 +85,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    // ffcotw 0e499f8 (the roster row, deployed 2026-09-24 13:29 UTC) and
+    // b4359b9 (the Ver.3.2.2 patch row, applied by that day's refresh 52e46d4).
+    // The release date is SNK's own: the 3.2.2 patch page says "Patch Note
+    // Release Date: September 18, 2026" and "New Playable Character: KIM
+    // KAPHWAN". NOT "on day one", which the Yasmine row can say and this one
+    // cannot: the patch and the fighter were both missing until the patch and
+    // roster checks found them six days later. The 58 is frozen from the
+    // 2026-09-23 refresh's data/replays.json: every match published 2026-09-18
+    // to 09-23, all filed under 3.1.3 until the fix. 52e46d4 has 58 of 58
+    // under 3.2.2, none missing, and nothing dated before 09-18 under 3.2.2.
+    date: '2026-09-24',
+    scope: 'ffcotw',
+    kind: 'data',
+    title: 'Kim Kaphwan joins City of the Wolves',
+    body: 'Kim Kaphwan, released with patch 3.2.2 on September 18, now has his own character page, colour and filter. Patch 3.2.2 joined the patch filter the same day, and the 58 matches published from September 18 to 23 moved to it from 3.1.3.',
+  },
+  {
     // ggst-replay-database, launch. Every number frozen from that repo's
     // data/replays.json on 2026-09-09: 24,706 published records, 7,966 of which
     // carry a startSeconds (the Replay Theater segments), 8,245 from that
