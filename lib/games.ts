@@ -49,8 +49,9 @@ export interface ShellGame {
    *  repo regenerated since, 228,443 bytes against the 228,436 committed here)
    *  and neither is CotW's (199,180 against 198,960). */
   art: string;
-  /** Self-hosted muted hover-loop (public path), trimmed from the game's own
-   *  hero video. Plays over `art` while the selector card is hovered/focused.
+  /** Self-hosted muted hover-loop on MEDIA_ORIGIN, trimmed from the game's own
+   *  hero video — except Avatar's, which is not the game's footage at all (see
+   *  its entry). Plays over `art` while the selector card is hovered/focused.
    *  OPTIONAL: a game without one simply shows its static key art. */
   video?: string;
   /** The card's blurb: what THIS archive holds that its neighbours' do not.
@@ -375,9 +376,19 @@ export const GAMES: ShellGame[] = [
     // while the tagline says something else. Accepted on the same terms as the
     // other six — ~5px on a rendered card — not overlooked.
     art: '/img/games/avatar.png',
-    // NO hover loop, deliberately, exactly as CotW and Strive shipped their own
-    // flips: the field is optional so a launch is never gated on trimming a
-    // trailer, and this game has no video in the Blob store yet. Static art.
+    // 0:00-0:08 of "Avatar: The Last Airbender - Intro [4K/60FPS]"
+    // (youtube.com/watch?v=LOWBBMC__w0, a third-party re-upload by CRC4K of
+    // the TV series' opening: the four element glyphs over red), trimmed to
+    // the siblings' shape: 1280×720, 30fps, muted (no audio stream at all), 8s.
+    // THE ONE HOVER LOOP THAT IS NOT ITS GAME'S OWN FOOTAGE, AND A DELIBERATE
+    // EXCEPTION TO A LICENCE FINDING. The rights holder prohibits reproduction
+    // outright (reference.paramount.com/terms-of-use, read 2026-09-18), which
+    // is why every portrait and tile in the game repo is generated. The owner
+    // chose this clip anyway on 2026-09-25, with that conflict put to them
+    // first. The platform art-licence audit starts here. Reverting it means
+    // deleting this line, which drops the card to its static art, and deleting
+    // the blob.
+    video: `${MEDIA_ORIGIN}/video/games/avatar.mp4`,
     // The support namespace is the line only this archive can claim: every side
     // picks a FIGHTER and a SUPPORT, and that repo's app.config.ts keeps
     // charactersPerSide at 1 on purpose so a support never enters

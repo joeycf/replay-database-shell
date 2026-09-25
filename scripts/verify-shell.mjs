@@ -1108,10 +1108,10 @@ try {
 
   // The origin check above passes a URL that names nothing: preload="none"
   // means the page never requests one, so a card whose file was never
-  // uploaded ships a dead hover loop that no other check sees. Written first
-  // on the held avatar-flip branch (06239c4), where Avatar's video line was
-  // committed before its blob existed; ported here with Granblue's loop, whose
-  // own not-yet-uploaded 404 was this copy's control.
+  // uploaded ships a dead hover loop that no other check sees. Written on this
+  // branch for Avatar's state on 2026-09-25 (its video line committed before
+  // its blob existed; that 404 was the first control) and ported to main with
+  // Granblue's loop (dfda610), whose own pre-upload 404 controlled that copy.
   const deadVideos = [];
   for (const src of new Set(present)) {
     const url = new URL(src, `${origin}/`).href;
