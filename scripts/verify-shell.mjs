@@ -156,9 +156,9 @@ const UPCOMING = [
 // gate and the page together rather than leaving a literal to go stale.
 const GAME_COUNT = Object.keys(SUMMARIES).length;
 const UPCOMING_COUNT = UPCOMING.length;
-const CHANGELOG_ENTRIES = 35;
-const CHANGELOG_NEWEST = '2026-09-09';
-const CHANGELOG_NEWEST_TEXT = '9 Sep';
+const CHANGELOG_ENTRIES = 36;
+const CHANGELOG_NEWEST = '2026-09-24';
+const CHANGELOG_NEWEST_TEXT = '24 Sep';
 
 /** Slugs the server currently answers for — the positive control drops one. */
 const servedSlugs = new Set(Object.keys(SUMMARIES));
