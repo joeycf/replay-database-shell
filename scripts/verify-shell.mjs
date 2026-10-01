@@ -37,6 +37,8 @@ import puppeteer from 'puppeteer-core';
  *      preload="none", so nothing else in this suite ever requests them:
  *      without this check a stray CDN URL would ship unnoticed. Control:
  *      `--control-media-origin https://not-registered.example` MUST fail.
+ *      And every one of them RESOLVES (HEAD 200, video/*): a registered
+ *      origin says nothing about whether the file was ever uploaded.
  *
  * Chrome: /usr/bin/google-chrome-stable (STACK §5.9). Static server: local,
  * ephemeral port. Exit non-zero on any failed gate.
@@ -1065,6 +1067,26 @@ try {
     'every <video> source is same-origin or on the registered media origin',
     offOrigin.length === 0,
     offOrigin.slice(0, 4).join(', ') || 'none',
+  );
+
+  // The origin check above passes a URL that names nothing: preload="none"
+  // means the page never requests one, so a card whose file was never
+  // uploaded ships a dead hover loop that no other check sees. Written first
+  // on the held avatar-flip branch (06239c4), where Avatar's video line was
+  // committed before its blob existed; ported here with Granblue's loop, whose
+  // own not-yet-uploaded 404 was this copy's control.
+  const deadVideos = [];
+  for (const src of new Set(present)) {
+    const url = new URL(src, `${origin}/`).href;
+    const res = await fetch(url, { method: 'HEAD' }).catch((e) => ({ status: String(e) }));
+    const type = res.headers?.get('content-type') ?? '';
+    if (res.status !== 200 || !type.startsWith('video/'))
+      deadVideos.push(`${url} → ${res.status} ${type}`);
+  }
+  check(
+    'every <video> source resolves to a video (HEAD 200, video/*)',
+    deadVideos.length === 0,
+    deadVideos.slice(0, 4).join(', ') || `${new Set(present).size} checked`,
   );
 
   // ── 5. request hygiene ───────────────────────────────────────────────────

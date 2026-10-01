@@ -281,9 +281,23 @@ export const GAMES: ShellGame[] = [
     // lockup reads "Character usage · matchups · meta over time" while the
     // tagline says something else. Accepted on the same terms as the others.
     art: '/img/games/gbvsr.png',
-    // NO hover loop, deliberately, exactly as CotW and Strive shipped their own
-    // flips: the field is optional so a launch is never gated on trimming a
-    // trailer. Static art.
+    // 0:13-0:31 of "Granblue Fantasy Versus: Rising - EVO Japan 2023 Trailer"
+    // (youtube.com/watch?v=Q4928u3tddI, Cygames EN, the rights holder's own
+    // channel): an in-engine showcase — Gran, Percival, Ferry, Vaseraga and
+    // more — cut from the 1080p60 H.264 source to the siblings' shape: 1280×720,
+    // 30fps, H.264 High, yuv420p, no audio stream, faststart, 18.0s, 4.68 MB
+    // (capped at 2.0 Mb/s, about Strive's average; 0 black frames). The
+    // trailer's own "GBVS RISING" logo bug sits top-left throughout.
+    // A DELIBERATE EXCEPTION TO THIS GAME'S LICENCE FINDING, as Avatar's loop
+    // is to its own. The game's art comes ONLY from Cygames' Fan Kit, whose
+    // Article 1 says "Other copyrighted materials relating to the Content may
+    // not be posted to or reprinted on external websites" — which a re-hosted
+    // trailer clip is. The owner chose this clip on 2026-10-01 with that
+    // conflict put to them first. And it falls OUTSIDE the game repo's
+    // revocation command: `npm run data:art:revoked` there cannot reach this
+    // shell's Blob store, so a revocation (Article 3) must also delete this
+    // line and the blob — that repo's art.ts prints the step.
+    video: `${MEDIA_ORIGIN}/video/games/gbvsr.mp4`,
     // The EX mark is the line only this archive can claim: Ver 2.20 gave three
     // fighters an EX mode, and a record carries the mark when — and only when —
     // its source said so. "Sets" because every intake uploads whole sets, never
