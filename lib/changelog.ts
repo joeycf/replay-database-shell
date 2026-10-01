@@ -62,7 +62,16 @@
  *  app/pages/changelog.vue. The last is a Record<Scope, string>, so omitting it
  *  is a typecheck failure rather than a badge that quietly renders its slug. */
 export type Scope =
-  'platform' | 'engine' | 'shell' | '2xko' | 'tekken' | 'sf6' | 'tokon' | 'ffcotw' | 'ggst';
+  | 'platform'
+  | 'engine'
+  | 'shell'
+  | '2xko'
+  | 'tekken'
+  | 'sf6'
+  | 'tokon'
+  | 'ffcotw'
+  | 'ggst'
+  | 'gbvsr';
 
 /** launch = a game or the platform itself going live · feature = something new
  *  to use · data = matches or fields arriving · improvement = something that
@@ -84,6 +93,37 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    // gbvsr-replay-database, launch. Every number frozen from that repo's
+    // data/replays.json at 6361f9a (2026-10-01): 15,743 published records, the
+    // earliest dated 2023-12-11 (the vendor's early access, three days before
+    // the December 14 release), 1,708 of them carrying a startSeconds (Replay
+    // Theater tournament segments), 284 carrying an EX mark, 104 with Id on a
+    // side, 246 on Ver 2.60, the newest patch.
+    //
+    // "SETS", as Strive's row says, and for the same reason: the dominant
+    // channel's median upload is 448s against a ~3-minute game, and the
+    // catalogue's consecutive tournament rows sit a median 559s apart, splitting
+    // only where a player changes fighter. So a channel record and a catalogue
+    // segment are BOTH sets here, unlike Strive, where segments are single
+    // matches. The body says "cut from event streams" without calling them
+    // matches.
+    //
+    // THE EX SENTENCE is the one only this archive can write: Ver 2.20 gave
+    // Gran, Djeeta and Narmaya an EX mode, the vendor roster still lists 40
+    // fighters, and a record carries the mark only when its source wrote it. The
+    // body says "marked" on purpose; an unmarked record is unknown, not base.
+    //
+    // Id is named because she is the newest fighter and the one a visitor is
+    // most likely to look up in launch week; 104 is a frozen launch count. The
+    // roster size is absent on purpose, exactly as Strive's and CotW's rows omit
+    // theirs: a fighter count goes stale with the next character pass.
+    date: '2026-10-01',
+    scope: 'gbvsr',
+    kind: 'launch',
+    title: 'Granblue Fantasy Versus: Rising joins the archive',
+    body: 'Granblue Fantasy Versus: Rising joins Replay Database with 15,743 replays, running from the December 2023 early access through Version 2.60. They are whole sets, as the channels upload them; 1,708 are cut from tournament streams, so opening one starts the video at that set. Gran, Djeeta and Narmaya can be filtered by EX mode wherever a source marked it (284 replays at launch), and Id, the newest fighter, already had 104.',
+  },
   {
     // ffcotw 0e499f8 (the roster row, deployed 2026-09-24 13:29 UTC) and
     // b4359b9 (the Ver.3.2.2 patch row, applied by that day's refresh 52e46d4).

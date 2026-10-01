@@ -266,9 +266,12 @@ A game that has been announced but has no replays yet goes in **`UPCOMING`**, no
    and at least AA on the card ground (Tekken's `#e13048` is the floor at
    4.50:1 — the badge sets 11px text in this colour). Occupied hues today:
    2XKO 2 · Tekken 20 · SF6 52 · Strive 82 · CotW 93 · umbrella teal 190 ·
-   Tōkon 244 · Granblue 272 · Avatar 284. FATAL FURY and Strive both demoted
+   Tōkon 244 · Granblue 251 · Avatar 284. FATAL FURY and Strive both demoted
    their own sampled reds for landing ~11° from Tekken; assume the obvious
-   sample is taken and check before committing to it.
+   sample is taken and check before committing to it. (Granblue went live on
+   2026-10-01 at its skin's sky blue, 7° from Tōkon — a collision the
+   2026-09-15 colour policy accepts across games; the rule above still binds an
+   announced card's provisional accent.)
 6. `npm run generate && npm run verify:shell` — the gates assert one `ItemList`
    entry per LIVE game and one sitemap child per live game plus the page
    sitemap (an upcoming game adds to neither), that every upcoming card has no

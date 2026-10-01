@@ -178,6 +178,10 @@
       "destination": "https://ggst-replay-database.vercel.app/_vercel/insights/:path*"
     },
     {
+      "source": "/gbvsr-insights/:path*",
+      "destination": "https://gbvsr-replay-database.vercel.app/_vercel/insights/:path*"
+    },
+    {
       "source": "/2xko",
       "destination": "https://2xko-replay-database.vercel.app/2xko"
     },
@@ -224,6 +228,14 @@
     {
       "source": "/ggst/:path*",
       "destination": "https://ggst-replay-database.vercel.app/ggst/:path*"
+    },
+    {
+      "source": "/gbvsr",
+      "destination": "https://gbvsr-replay-database.vercel.app/gbvsr"
+    },
+    {
+      "source": "/gbvsr/:path*",
+      "destination": "https://gbvsr-replay-database.vercel.app/gbvsr/:path*"
     }
   ]
 }

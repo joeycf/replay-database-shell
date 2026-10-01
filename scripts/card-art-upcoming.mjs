@@ -1,10 +1,10 @@
 // Selector card art for the UPCOMING games — public/img/games/<slug>.png,
 // 1200×630, the same size and role as the five live cards.
 //
-//   node scripts/card-art-upcoming.mjs            # all three
-//   node scripts/card-art-upcoming.mjs ggst       # one
+//   node scripts/card-art-upcoming.mjs            # every register below
+//   node scripts/card-art-upcoming.mjs avatar     # one
 //
-// ONE script with three registers, not three copies. scripts/card-art-tokon.mjs
+// ONE script with a register per announced game, not a copy per game. scripts/card-art-tokon.mjs
 // is the original of this pattern and stays untouched: it is the only record of
 // how the shipped tokon.png was made before that game got a repo of its own.
 // Everything structural here — the ink ground, the 10px border and its inset
@@ -71,7 +71,7 @@ const SUBSETS = [
 ];
 
 /**
- * The three registers. `short` + `kicker` + `soon` are the only text; the rest
+ * The registers. `short` + `kicker` + `soon` are the only text; the rest
  * is colour and texture parameters. A register never introduces a new layout —
  * `texture()` returns background layers that sit BEHIND the shared type block,
  * so a bad texture can make a card ugly but never illegible.
@@ -114,22 +114,6 @@ const REGISTERS = {
       quadrants: ['#f9bd6d', '#62c0f3', '#d1deb2', '#e91b04'],
       ring: 26,
     },
-  },
-  gbvsr: {
-    short: 'GBVSR',
-    kicker: 'GRANBLUE FANTASY VERSUS: RISING &nbsp;·&nbsp; CYGAMES &times; ARC SYSTEM WORKS',
-    // Sampled from the official key-visual logo
-    // (rising.granbluefantasy.jp/assets/images/kv_logo.9880ca03.png, 655×319):
-    // ultramarine #0000c8 is 72.5% of its flat fills, sky #5bc9fa is 9.0%.
-    // The ultramarine is lifted L .376 → .593 for AA and carried +8° of hue,
-    // which is what buys it clear water from Tōkon's #03a5fe rather than
-    // sitting 17° away as a second blue card.
-    accent: '#5569ff',
-    accent2: '#5bc9fa',
-    // Fantasy-ornate: a crossed diamond lattice, a soft bloom behind the
-    // lockup, and nested rules instead of one — the register of an illuminated
-    // border, without drawing anything anyone owns.
-    texture: { kind: 'ornate', lattice: 34, bloom: 0.22, insets: 3 },
   },
 };
 
@@ -177,19 +161,6 @@ const TEXTURES = {
               background:repeating-radial-gradient(circle at 84% 26%, ${r.accent} 0 1.5px, transparent 1.5px ${r.texture.ring}px);
               -webkit-mask-image:radial-gradient(circle at 84% 26%, rgba(0,0,0,.9), transparent 62%);"></div>`;
   },
-
-  ornate: (r) => `
-  <!-- Crossed lattice: an illuminated border's diamond fill, drawn as two
-       gradients rather than any borrowed ornament. -->
-  <div style="position:absolute;inset:0;opacity:.17;
-              background:repeating-linear-gradient(45deg, ${r.accent} 0 1px, transparent 1px ${r.texture.lattice}px),
-                         repeating-linear-gradient(-45deg, ${r.accent2} 0 1px, transparent 1px ${r.texture.lattice}px);"></div>
-  <div style="position:absolute;inset:0;opacity:${r.texture.bloom};
-              background:radial-gradient(ellipse 62% 52% at 32% 40%, ${r.accent} 0%, transparent 68%);"></div>
-  ${Array.from({ length: r.texture.insets }, (_, i) => {
-    const inset = 22 + i * 9;
-    return `<div style="position:absolute;inset:${inset}px;border:1px solid ${r.accent}${['33', '22', '18'][i] ?? '18'};"></div>`;
-  }).join('\n  ')}`,
 };
 
 async function fontFaces() {

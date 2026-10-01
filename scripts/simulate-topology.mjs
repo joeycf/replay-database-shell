@@ -39,6 +39,7 @@ const GAME_DIRS = {
     '../ffcotw-replay-database/.vercel/output/static',
   ),
   'ggst-replay-database.vercel.app': join(ROOT, '../ggst-replay-database/.vercel/output/static'),
+  'gbvsr-replay-database.vercel.app': join(ROOT, '../gbvsr-replay-database/.vercel/output/static'),
 };
 const CONFIG = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
 
