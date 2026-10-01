@@ -1,5 +1,5 @@
 // Selector card art for the UPCOMING games — public/img/games/<slug>.png,
-// 1200×630, the same size and role as the five live cards.
+// 1200×630, the same size and role as the live cards.
 //
 //   node scripts/card-art-upcoming.mjs            # every register below
 //   node scripts/card-art-upcoming.mjs avatar     # one
@@ -40,7 +40,7 @@
 // wrong the moment a card needs anything outside it. Generator-only network
 // use, exactly as the game repos' og.ts documents for its own.
 
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
@@ -77,22 +77,6 @@ const SUBSETS = [
  * so a bad texture can make a card ugly but never illegible.
  */
 const REGISTERS = {
-  ggst: {
-    short: 'STRIVE',
-    kicker: 'GUILTY GEAR -STRIVE- &nbsp;·&nbsp; 2.5D FIGHTER &nbsp;·&nbsp; ARC SYSTEM WORKS',
-    // Sampled from the official logo supplied by the rights holder
-    // (ggst-replay-database/design/handoff/GGStrive_Logo.webp, 820×230):
-    // letterform red #7b1b1e, bone white #e5e5e5. The GOLD is the skin's
-    // --color-primary (that repo's design/handoff/tokens.css), anchored on the
-    // gold-foil logo variant used on the store capsules — PROVISIONAL, and the
-    // one value here the theme may still move. Red is deliberately not the
-    // accent: at any lightness that would carry text it lands on Tekken.
-    accent: '#d9a53a',
-    accent2: '#7b1b1e',
-    // Metal and stencil: milled brush, a raking sheen, and cut slits. Guilty
-    // Gear's own UI language is machined metal and heavy stencil type.
-    texture: { kind: 'metal', brush: 7, sheen: 0.3, slits: 11 },
-  },
   avatar: {
     short: 'AVATAR',
     kicker: 'AVATAR LEGENDS: THE FIGHTING GAME &nbsp;·&nbsp; PARAMOUNT &times; GAMEPLAY GROUP',
@@ -120,24 +104,6 @@ const REGISTERS = {
 /** Background layers per register. Pure CSS: gradients, clip-paths and masks —
  *  never an image. */
 const TEXTURES = {
-  metal: (r) => `
-  <!-- Milled brush in two directions, then a raking sheen across it. -->
-  <div style="position:absolute;inset:0;opacity:.16;
-              background:repeating-linear-gradient(102deg, ${r.accent} 0 1px, transparent 1px ${r.texture.brush}px),
-                         repeating-linear-gradient(78deg, ${r.accent2} 0 1px, transparent 1px ${r.texture.brush * 2}px);"></div>
-  <div style="position:absolute;inset:0;opacity:${r.texture.sheen};
-              background:linear-gradient(102deg, transparent 18%, ${r.accent}55 40%, transparent 58%);"></div>
-  <!-- Stencil slits: the cut bridges that keep a stencil letter in one piece.
-       Kept to a 54px band at the very top — above where the type block starts
-       (118px), for the reason card-art-tokon.mjs gives about panel edges. -->
-  <div style="position:absolute;left:0;right:0;top:0;height:54px;background:${r.accent};opacity:.11;
-              clip-path:polygon(${Array.from({ length: r.texture.slits }, (_, i) => {
-                const x = 3 + i * (94 / r.texture.slits);
-                return `${x}% 0,${x + 1.6}% 0,${x + 0.9}% 100%,${x - 0.7}% 100%`;
-              }).join(',')});"></div>
-  <div style="position:absolute;inset:0;background:${INK};
-              clip-path:polygon(0 70%,100% 64%,100% 66%,0 72%);"></div>`,
-
   elemental: (r) => {
     const [air, water, earth, fire] = r.texture.quadrants;
     const q = (color, poly, op) =>
@@ -251,6 +217,34 @@ ${fonts}
     <span style="flex:1;background:${r.accent2};"></span>
   </div>
 </body></html>`;
+
+// A REGISTER FOR A LIVE GAME IS REFUSED, before anything renders. The bare
+// run renders every register, so one left behind after its game's flip is a
+// command that overwrites that game's live card art with a Coming Soon tile —
+// and Strive's sat here for three weeks after its promotion. The live slugs are
+// read out of lib/games.ts's GAMES array rather than restated (this is plain
+// node and that table is TypeScript, the trade verify-shell makes for UPCOMING).
+const gamesSrc = await readFile(join(ROOT, 'lib/games.ts'), 'utf8');
+const liveBlock = gamesSrc.slice(
+  gamesSrc.indexOf('export const GAMES'),
+  gamesSrc.indexOf('export const UPCOMING'),
+);
+const live = new Set([...liveBlock.matchAll(/^ {4}slug: '([a-z0-9-]+)',$/gm)].map((m) => m[1]));
+if (live.size === 0) {
+  console.error(
+    '✖ read no live slugs out of lib/games.ts GAMES — refusing to guess which art is live',
+  );
+  process.exit(1);
+}
+const stale = Object.keys(REGISTERS).filter((s) => live.has(s));
+if (stale.length) {
+  console.error(
+    `✖ register(s) for LIVE game(s): ${stale.join(', ')}. Rendering would overwrite that ` +
+      'live card art with a Coming Soon tile. Delete the register — a promotion out of ' +
+      'UPCOMING deletes its register in the same commit (lib/games.ts, UpcomingGame).',
+  );
+  process.exit(1);
+}
 
 const slugs = process.argv.slice(2);
 const unknown = slugs.filter((s) => !REGISTERS[s]);
