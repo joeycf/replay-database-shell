@@ -270,10 +270,12 @@ export const GAMES: ShellGame[] = [
     // (Δhue ≥ 60 from the umbrella teal, ≥ 110 from the five warm ones).
     accent: '#4da6ff',
     // A byte-copy of the game repo's own public/og-default.png (1200×630,
-    // 276,134 bytes, verified with cmp), the way every sibling's was made. IT
-    // CARRIES NO KIT ART — the card is type, colour and a 40-segment roster
-    // stripe — but it does carry "Character art © Cygames, Inc. · 2B © SQUARE
-    // ENIX" baked in, because the game's pages show Fan Kit art and the notice
+    // 271,226 bytes, verified with cmp), the way every sibling's was made. Its
+    // lockup is GBVSR/REPLAY like the siblings'; the first cut set the full
+    // title over "Replay Database" in two lines and stood out on the grid
+    // (re-cut 2026-10-01). IT CARRIES NO KIT ART — the card is type, colour and
+    // a 40-segment roster stripe — but it does carry "Character art © Cygames,
+    // Inc. · 2B © SQUARE ENIX" baked in, because the game's pages show Fan Kit art and the notice
     // travels with the brand (that repo's scripts/og.ts). Reused here like the
     // other six on that reading: the clause that keeps the game's support link
     // on its own pages covers the front door too.
