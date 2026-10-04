@@ -153,7 +153,13 @@ useJsonLd([
     name: 'Changelog — Replay Database',
     url: `${useSiteOrigin()}/changelog`,
     description: 'Dated history of the Replay Database platform, newest first.',
-    isPartOf: { '@type': 'WebSite', name: useBrandName(), url: `${useSiteOrigin()}/` },
+    // The @id is the home page's WebSite node (pages/index.vue).
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${useSiteOrigin()}/#website`,
+      name: useBrandName(),
+      url: `${useSiteOrigin()}/`,
+    },
   },
 ]);
 </script>

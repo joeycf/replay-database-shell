@@ -13,11 +13,25 @@
       <!-- Hero: the umbrella lockup leads (the shell is the ONLY surface that
            renders the full BrandLogo; games keep their text wordmarks). -->
       <section class="flex flex-col items-center pb-10 pt-16 text-center md:pb-14 md:pt-24">
-        <BrandLogo :mark-size="76" />
-        <p class="mt-8 max-w-xl font-ui text-sub text-text-secondary">
-          The competitive fighting-game replay archive. Browse, filter, and study replays across
-          every game in the collection.
-        </p>
+        <!-- The lockup reads "ReplayDB", so the page's one h1 is the sentence
+             under it, which names the site in full. Both halves stay inline so
+             they wrap as one paragraph; max-w-2xl + text-balance keep it to two
+             even rows on desktop now that the sentence is longer. The logo is
+             hidden from screen readers because the h1 says the same name. -->
+        <BrandLogo
+          :mark-size="76"
+          aria-hidden="true"
+        />
+        <div class="mt-8 max-w-2xl text-balance font-ui text-sub text-text-secondary">
+          <h1 class="inline">
+            <span class="font-semibold text-text">Replay Database</span> is the competitive
+            fighting-game replay archive.
+          </h1>
+          {{ ' ' }}
+          <p class="inline">
+            Browse, filter, and study replays across every game in the collection.
+          </p>
+        </div>
         <!-- `.aggregate` / `.count` are the gates' stable hooks
              (scripts/verify-shell.mjs, scripts/verify-cutover.mjs). -->
         <p
@@ -382,24 +396,28 @@ useJsonLd([
 // home page only. Engine v0.16.0 moved them out of its site-wide seo.ts plugin
 // and into its own pages/index.vue, which this page replaces, so the selector
 // has to emit them or the apex carries none.
+//
+// alternateName ties the logo's "ReplayDB" to "Replay Database". There is no
+// SearchAction: Google retired the sitelinks search box in Nov 2024, and the
+// apex /?q= redirects to 2XKO's search alone (vercel.json), so it advertised a
+// site-wide search that does not exist. No sameAs until the brand has a public
+// profile of its own.
 const brand = useBrandName();
+const alternateName = ['ReplayDB', 'Replay DB'];
 useJsonLd([
   {
     '@type': 'WebSite',
+    '@id': `${site}/#website`,
     name: brand,
+    alternateName,
     url: `${site}/`,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${site}/?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
+    publisher: { '@id': `${site}/#organization` },
   },
   {
     '@type': 'Organization',
+    '@id': `${site}/#organization`,
     name: brand,
+    alternateName,
     url: `${site}/`,
     logo: `${site}/icons/favicon-512.png`,
   },

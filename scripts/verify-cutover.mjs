@@ -7,7 +7,9 @@ import puppeteer from 'puppeteer-core';
  *   node scripts/verify-cutover.mjs https://<preview>    # the C.3 rehearsal host
  *
  * Gates:
- *   1. / = the selector, umbrella-themed (#17cfc8), valid ItemList JSON-LD, and
+ *   1. / = the selector, umbrella-themed (#17cfc8), valid ItemList JSON-LD, one
+ *      h1 naming Replay Database, WebSite + Organization carrying the
+ *      ReplayDB alternateName (and no SearchAction), and
  *      the coming-soon cards present but non-navigable — announced, never
  *      claimed in structured data or the sitemap, and each /<slug> still a 404.
  *   2. Every legacy 2XKO apex URL shape 30x → target → 200: /champions/ekko,
@@ -383,6 +385,17 @@ try {
         return -1;
       }
     })(),
+    // The site's name: the one h1, and the WebSite/Organization nodes.
+    h1s: [...document.querySelectorAll('h1')].map((h) => h.textContent.replace(/\s+/g, ' ').trim()),
+    siteNodes: (() => {
+      try {
+        return [...document.querySelectorAll('script[type="application/ld+json"]')]
+          .map((s) => JSON.parse(s.textContent))
+          .filter((n) => n['@type'] === 'WebSite' || n['@type'] === 'Organization');
+      } catch {
+        return [];
+      }
+    })(),
   }));
   check(`selector wears the umbrella teal (${sel.primary})`, sel.primary === '#17cfc8');
   check(
@@ -401,6 +414,25 @@ try {
     JSON.stringify(sel.gridCols),
   );
   check(`ItemList JSON-LD parses with ${GAMES.length} games`, sel.itemList === GAMES.length);
+  check(
+    `one h1, naming Replay Database (${JSON.stringify(sel.h1s)})`,
+    sel.h1s.length === 1 && sel.h1s[0].startsWith('Replay Database '),
+  );
+  const site = sel.siteNodes.find((n) => n['@type'] === 'WebSite');
+  const org = sel.siteNodes.find((n) => n['@type'] === 'Organization');
+  check(
+    `one WebSite + one Organization named Replay Database, alternateName ReplayDB, no SearchAction`,
+    sel.siteNodes.length === 2 &&
+      [site, org].every(
+        (n) =>
+          n?.name === 'Replay Database' &&
+          n.url === `${APEX}/` &&
+          n.alternateName?.includes('ReplayDB'),
+      ) &&
+      !site.potentialAction &&
+      site.publisher?.['@id'] === org['@id'],
+    JSON.stringify(sel.siteNodes),
+  );
   check(
     `${UPCOMING.length} upcoming cards on the apex`,
     sel.upcoming.length === UPCOMING.length,

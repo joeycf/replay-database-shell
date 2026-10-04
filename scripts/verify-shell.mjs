@@ -19,7 +19,8 @@ import puppeteer from 'puppeteer-core';
  *      sitemap index lists exactly the games that HAVE replays. An
  *      announced-but-unshipped game must reach neither (see lib/games.ts).
  *      The prerendered / also carries exactly one WebSite and one Organization
- *      node named Replay Database (the engine stopped supplying them, v0.16.0).
+ *      node named Replay Database with the ReplayDB alternateName (the engine
+ *      stopped supplying them, v0.16.0), and one h1 that names the site.
  *   3. The selector's /changelog link sits between the aggregate and the cards
  *      and carries the newest entry's date.
  *   4. Per-card replay counts + the aggregate hero line, and the POSITIVE
@@ -554,13 +555,45 @@ try {
   for (const type of ['WebSite', 'Organization']) {
     const nodes = servedLd.filter((n) => n['@type'] === type);
     check(
-      `prerendered html carries ONE ${type} node named Replay Database at the apex`,
+      `prerendered html carries ONE ${type} node named Replay Database at the apex, alternateName ReplayDB`,
       nodes.length === 1 &&
         nodes[0].name === 'Replay Database' &&
-        nodes[0].url === 'https://replaydatabase.com/',
+        nodes[0].url === 'https://replaydatabase.com/' &&
+        nodes[0]['@id'] === `https://replaydatabase.com/#${type.toLowerCase()}` &&
+        nodes[0].alternateName?.includes('ReplayDB'),
       JSON.stringify(nodes),
     );
   }
+  const servedSite = servedLd.find((n) => n['@type'] === 'WebSite');
+  check(
+    `WebSite has no SearchAction and names the Organization as publisher`,
+    !servedSite?.potentialAction &&
+      servedSite?.publisher?.['@id'] === 'https://replaydatabase.com/#organization',
+    JSON.stringify(servedSite),
+  );
+  // The logo reads "ReplayDB"; the h1 is the hero sentence that names the site
+  // in full. Served html proves crawlers get it without JS; the DOM text proves
+  // the inline h1 + p still read as one sentence pair with a space between.
+  const servedH1s = [...servedHtml.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/g)].map((m) =>
+    m[1]
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
+  check(
+    `prerendered html has ONE h1, starting "Replay Database" (${JSON.stringify(servedH1s)})`,
+    servedH1s.length === 1 && servedH1s[0].startsWith('Replay Database is the competitive'),
+  );
+  const heroLine = await page.evaluate(() =>
+    document.querySelector('main h1')?.parentElement?.textContent.replace(/\s+/g, ' ').trim(),
+  );
+  check(
+    `hero line reads as one passage ("…archive. Browse…")`,
+    /^Replay Database is the competitive fighting-game replay archive\. Browse, filter, and study replays across every game in the collection\.$/.test(
+      heroLine ?? '',
+    ),
+    JSON.stringify(heroLine),
+  );
 
   // ── 1b. per-card counts + the aggregate line (Phase 6) ───────────────────
   console.log('\n[/] counts');
