@@ -377,6 +377,33 @@ useJsonLd([
     })),
   },
 ]);
+
+// The WebSite and Organization nodes Google reads a site's name from, on the
+// home page only. Engine v0.16.0 moved them out of its site-wide seo.ts plugin
+// and into its own pages/index.vue, which this page replaces, so the selector
+// has to emit them or the apex carries none.
+const brand = useBrandName();
+useJsonLd([
+  {
+    '@type': 'WebSite',
+    name: brand,
+    url: `${site}/`,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${site}/?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  },
+  {
+    '@type': 'Organization',
+    name: brand,
+    url: `${site}/`,
+    logo: `${site}/icons/favicon-512.png`,
+  },
+]);
 </script>
 
 <style scoped>

@@ -39,7 +39,10 @@ static leaf.)
 
 - **The selector** (`app/pages/index.vue`) — the umbrella-branded landing page:
   the full ReplayDB `BrandLogo` lockup (the shell is the only surface that
-  renders it), one card per game linking to its subpath, and `ItemList` JSON-LD.
+  renders it), one card per game linking to its subpath, and `ItemList`,
+  `WebSite` and `Organization` JSON-LD (the last two used to come from the
+  engine; since v0.16.0 they live on the engine's home page, which this one
+  replaces).
   Replay counts appear only once the games publish `summary.json` — omitted until
   then, never faked.
 - **The changelog** (`app/pages/changelog.vue`) — the platform's public history,

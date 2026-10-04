@@ -18,6 +18,8 @@ import puppeteer from 'puppeteer-core';
  *   2. ItemList JSON-LD parses and enumerates the live games at apex URLs — and the
  *      sitemap index lists exactly the games that HAVE replays. An
  *      announced-but-unshipped game must reach neither (see lib/games.ts).
+ *      The prerendered / also carries exactly one WebSite and one Organization
+ *      node named Replay Database (the engine stopped supplying them, v0.16.0).
  *   3. The selector's /changelog link sits between the aggregate and the cards
  *      and carries the newest entry's date.
  *   4. Per-card replay counts + the aggregate hero line, and the POSITIVE
@@ -539,6 +541,24 @@ try {
       `prerendered html has no /${u.slug} link`,
       !new RegExp(`href="[^"]*/${u.slug}`).test(servedHtml),
       servedHtml.match(new RegExp(`href="[^"]*${u.slug}[^"]*"`, 'g'))?.join(', '),
+    );
+  }
+
+  // ── 1a3. the site's own name, in the PRERENDERED html ────────────────────
+  // Google reads a site's name from the home page's WebSite node. The engine
+  // emits it from its own pages/index.vue (v0.16.0 on), which this app
+  // overrides, so nothing upstream catches the selector losing it.
+  const servedLd = [
+    ...servedHtml.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs),
+  ].map((m) => JSON.parse(m[1]));
+  for (const type of ['WebSite', 'Organization']) {
+    const nodes = servedLd.filter((n) => n['@type'] === type);
+    check(
+      `prerendered html carries ONE ${type} node named Replay Database at the apex`,
+      nodes.length === 1 &&
+        nodes[0].name === 'Replay Database' &&
+        nodes[0].url === 'https://replaydatabase.com/',
+      JSON.stringify(nodes),
     );
   }
 

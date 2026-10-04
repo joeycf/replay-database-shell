@@ -14,14 +14,13 @@ export default defineNuxtConfig({
   // Never track a branch — bump the pin deliberately. `install: true` is
   // REQUIRED for git layers: without it the cloned layer gets no node_modules
   // and its runtime deps (@tailwindcss/vite, ufo, …) don't resolve (STACK §5.5).
-  // v0.6.4 is the platform-wide engine tag (all three games pin it too). The
-  // shell skipped v0.5.5–v0.6.0 deliberately: those are game-facing (grouped
-  // patch facet, source groups) and inert on a three-route selector. Everything
-  // since has been behaviour-only or asset-only — v0.6.4 adds maskable icons,
-  // which the shell inherits from the engine's public/ like every other icon,
-  // and a stats tile the shell has no page for. Kept in step so the whole
-  // platform sits on one tag.
-  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.12.0', { install: true }]],
+  // v0.18.1 is the tag the seven live games pin. Most engine releases are
+  // game-facing and inert on a three-route selector, so the shell bumps lazily.
+  // One that was not: since v0.16.0 the WebSite and Organization JSON-LD come
+  // from the engine's pages/index.vue rather than a site-wide plugin, and this
+  // app overrides that page, so app/pages/index.vue emits them itself (and
+  // scripts/verify-shell.mjs fails if they go missing).
+  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.18.1', { install: true }]],
 
   compatibilityDate: '2025-07-01',
 
