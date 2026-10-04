@@ -25,7 +25,7 @@
         <div class="mt-8 max-w-2xl text-balance font-ui text-sub text-text-secondary">
           <h1 class="inline">
             <span class="font-semibold text-text">Replay Database</span> is the competitive
-            fighting-game replay archive.
+            fighting-game replay archive. Built for the FGC community.
           </h1>
           {{ ' ' }}
           <p class="inline">
