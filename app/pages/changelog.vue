@@ -108,6 +108,7 @@ const SCOPE_LABELS: Record<Scope, string> = {
   ffcotw: 'CotW',
   ggst: 'Strive',
   gbvsr: 'Granblue',
+  avatar: 'Avatar',
 };
 const scopeLabel = (scope: Scope): string => SCOPE_LABELS[scope] ?? scope;
 

@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   // Never track a branch — bump the pin deliberately. `install: true` is
   // REQUIRED for git layers: without it the cloned layer gets no node_modules
   // and its runtime deps (@tailwindcss/vite, ufo, …) don't resolve (STACK §5.5).
-  // v0.18.1 is the tag the seven live games pin. Most engine releases are
+  // v0.18.1 is the tag all eight live games pin. Most engine releases are
   // game-facing and inert on a three-route selector, so the shell bumps lazily.
   // One that was not: since v0.16.0 the WebSite and Organization JSON-LD come
   // from the engine's pages/index.vue rather than a site-wide plugin, and this

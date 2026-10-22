@@ -53,7 +53,7 @@
  * scope-to-accent mapping therefore lives in app/pages/changelog.vue.
  */
 
-/** Which part of the platform a change belongs to. The six game slugs match
+/** Which part of the platform a change belongs to. The eight game slugs match
  *  ShellGame.slug in lib/games.ts (NOT .id — Tekken's id is 'tekken8'), which
  *  is how the page finds each badge's accent. 'platform' is a change all games
  *  got at once; 'engine' and 'shell' are the shared layer and the apex.
@@ -71,7 +71,8 @@ export type Scope =
   | 'tokon'
   | 'ffcotw'
   | 'ggst'
-  | 'gbvsr';
+  | 'gbvsr'
+  | 'avatar';
 
 /** launch = a game or the platform itself going live · feature = something new
  *  to use · data = matches or fields arriving · improvement = something that
@@ -93,6 +94,60 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    // avatar-replay-database, launch. Every number frozen from what the
+    // vercel.app alias served at that repo's 0687c7a ("data: refresh 2026-10-21 — 902 replays"),
+    // whose replays.json is byte-identical to the commit: summary.json replays
+    // 902, players 529, characters 12; replays.json carries 33
+    // sources, ONE of them the catalogue, so "32 channels and one match
+    // catalogue"; played-on dates run 2026-07-24 (the day after the 07-23
+    // release) to 2026-10-20. 552 replays name at least one support, 426 of them
+    // from the catalogue (which states one on 426 of its 444 rows), and 15
+    // of the 32 channels had ever stated one. The four-week figure counts
+    // data/videos.json at the same commit by the UTC Monday of publishedAt:
+    // 285 replays published 2026-09-21 to 10-18, of which 192 are catalogue
+    // rows with a startSeconds (a single match cut from a tournament stream,
+    // each naming its event); the other 12 catalogue rows are whole videos
+    // (11 with no event, 1 an EVO France 2026 Top 24 set) and are not in the 192.
+    //
+    // DATED BY THE FLIP, not by the game's first build: the archive ran on its
+    // own host from 2026-09-18, and this is the day the front door lists it (the
+    // shell's flip commit, pushed 2026-10-22). It went live as the owner's open
+    // override of its launch gate; that is recorded in the flip commit and the
+    // engine's PLAN.md, and gate names stay out of visitor copy.
+    //
+    // "SMALL" IS THE POINT OF THE SECOND SENTENCE. A visitor who has read
+    // Strive's or CotW's rows expects years of footage; this corpus is under
+    // three months old, and most of what arrived in its last four weeks came cut
+    // from tournament streams rather than uploaded by channels. Both are frozen
+    // launch figures, never a weekly rate, because a rate reads as a promise.
+    //
+    // SETS AND MATCHES as that repo's README draws them: a channel upload is a
+    // whole set, a catalogue row with a startSeconds is a match cut out of a
+    // stream. The body says "replays" for the total, as the card and the other
+    // launches do, and "matches" only for the timestamped catalogue rows.
+    //
+    // THE SUPPORT SENTENCE IS THIS GAME'S ONLY UNIQUE CLAIM. A support is NOT a
+    // second character here (charactersPerSide stays 1), hence "as well as a
+    // fighter". At the 09-19 draft the catalogue named one on every row and the
+    // channels almost never did; by launch 15 channels had, so the asymmetry is
+    // stated as launch counts rather than as "every row".
+    //
+    // THE ROSTER COUNT IS STATED and the announced count is not. No announced
+    // fighter has a vendor date (scripts/expiries.ts holds six unreleased rows,
+    // one an unchosen vote slot), and every count in the body is anchored to
+    // launch ("the game had released", "at launch"), so none of it goes stale
+    // the day a new fighter ships.
+    //
+    // "JOINS" IS THE HOUSE WORD: every game launch from Tekken's on uses it
+    // (2XKO's, the first, "opens"). EVO France 2026's Top 8 is in the catalogue
+    // now, but one bracket does not earn a sentence over the support asymmetry.
+    date: '2026-10-22',
+    scope: 'avatar',
+    kind: 'launch',
+    title: 'Avatar Legends: The Fighting Game joins the archive',
+    body: "Avatar Legends: The Fighting Game joins Replay Database with 902 replays from 32 channels and one match catalogue, covering 529 players and all 12 fighters the game had released. It is a small archive for a young game: the footage runs from 24 July 2026, the day after the game's release, to 20 October 2026, and in the four weeks to 18 October, 192 of the 285 new replays were single matches cut from tournament streams rather than whole sets. Every side picks a support as well as a fighter, and at launch 552 replays named one, 426 of them from the catalogue, because only 15 of the 32 channels had ever stated a support. At launch the vendor had dated none of its announced fighters, so the roster here is what had shipped rather than what was promised.",
+  },
   {
     // gbvsr-replay-database, launch. Every number frozen from that repo's
     // data/replays.json at 6361f9a (2026-10-01): 15,743 published records, the
