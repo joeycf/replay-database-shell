@@ -83,8 +83,8 @@ const entries = useAppConfig().changelog as ChangelogEntry[];
 const games = useAppConfig().games;
 
 /**
- * Scope → the colour its badge wears. The four game scopes borrow that game's
- * own accent from lib/games.ts, so the changelog is wayfound by the same four
+ * Scope → the colour its badge wears. Each game scope borrows that game's
+ * own accent from lib/games.ts, so the changelog is wayfound by the same
  * identities as the selector cards; platform/engine/shell wear the umbrella
  * teal, because a change to all of them belongs to no single game.
  *

@@ -18,7 +18,7 @@ import { SITE_URL } from '../lib/site';
  *                        └─► <apex>/tekken/sitemap.xml (rewritten to the game)
  *
  * 2XKO's previously submitted Search Console URL was `/sitemap.xml`, so this
- * transitions that submission in place — the index now fans out to both games'
+ * transitions that submission in place — the index now fans out to every game's
  * prefixed sitemaps. This module runs AFTER the engine's static-artifacts on
  * `prerender:done`: it renames the engine's page sitemap to `sitemap-pages.xml`
  * and overwrites `sitemap.xml` with the index. (The engine's robots.txt is left

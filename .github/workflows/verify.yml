@@ -1,0 +1,79 @@
+name: Shell checks
+
+# THE FRONT DOOR'S GATES, ON EVERY PUSH TO MAIN. Vercel's build runs `npm run
+# generate` and nothing else, so until this file the shell's other gates ran only
+# when someone remembered to: verify:shell sat red on main from 10-04 to 10-22
+# (the hero line after 9c12959), and the changelog literals went red the same way
+# in September. A check, not a deploy: Vercel deploys as before. A red here
+# means the front door's gates no longer describe the front door.
+#
+# TWO CHECKOUTS. typecheck resolves `@engine` to ../replay-engine (nuxt.config.ts
+# nodeTsConfig; app/app.config.ts imports GameConfig from it), so the engine is
+# checked out beside the shell at the tag nuxt.config.ts pins. It feeds TYPES
+# ONLY: ENGINE_PATH stays unset, so npm ci, typecheck and generate pull the
+# pinned github: layer exactly as Vercel does. Without it, typecheck fails with
+# TS2307 at app/app.config.ts:1 (measured on a clean checkout, 2026-10-23).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shell-checks
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Shell checks — red means the front door's gates no longer describe the front door
+    runs-on: ubuntu-latest
+    # The first runner run took 80 s (2026-10-23): ten minutes stops a hung npm ci
+    # long before GitHub's six-hour default.
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: replay-database-shell
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: replay-database-shell
+
+      # The pin the second checkout follows, read the way emit reads it: exactly one
+      # github:joeycf/replay-engine#vX.Y.Z (checklist 10i), or red.
+      - name: Read the engine pin
+        id: pin
+        run: |
+          tags=$(grep -oE 'github:joeycf/replay-engine#v[0-9]+\.[0-9]+\.[0-9]+' nuxt.config.ts | sed 's/.*#//' | sort -u | xargs)
+          if [ "$(echo "$tags" | wc -w)" -ne 1 ]; then
+            echo "::error::nuxt.config.ts must pin exactly one engine tag (checklist 10i), found: $tags"
+            exit 1
+          fi
+          echo "tag=$tags" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          repository: joeycf/replay-engine
+          ref: ${{ steps.pin.outputs.tag }}
+          path: replay-engine
+
+      - uses: actions/setup-node@v7
+        with:
+          # matches engines.node (the platform's Node policy — STACK.md §1)
+          node-version: 24
+          cache: npm
+          cache-dependency-path: replay-database-shell/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run generate
+
+      # verify:shell drives /usr/bin/google-chrome-stable (CHROME_PATH overrides);
+      # the runner images ship Google Chrome, so this only records which one ran.
+      - name: The runner's image and the Chrome verify:shell drives
+        run: |
+          grep '^PRETTY_NAME=' /etc/os-release
+          /usr/bin/google-chrome-stable --version
+
+      - run: npm run verify:shell

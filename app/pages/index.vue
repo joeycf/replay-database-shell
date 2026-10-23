@@ -70,7 +70,7 @@
 
       <!-- One card per game. Each is a full-page navigation (<a>, not NuxtLink)
            so the click hits the edge rewrite (vercel.json), never the SPA
-           router — /2xko and /tekken are not routes in this app. -->
+           router — no game's /<slug> is a route in this app. -->
       <!-- THREE COLUMNS FROM xl, inside a 1440px measure — the same measure the
            engine's own game pages use, so the front door is no longer the one
            narrow surface on the platform.
@@ -275,7 +275,7 @@
  * The selector — the apex flagship (replaydatabase.com). Its OWN chrome
  * (layout: false): the umbrella BrandLogo lockup leads, then a card per game.
  * The engine's game nav (Browse/Stats/…) must never surface here (PLAN §5 A.3),
- * and this page links ONLY to the game subpaths (/2xko, /tekken) — never into
+ * and this page links ONLY to the game subpaths (/2xko, /tekken, …) — never into
  * the engine's Browse/Characters/Players, which would render hollow (A.5).
  *
  * The shell wears the engine's neutral umbrella theme; the ONLY per-game color
@@ -555,9 +555,10 @@ useJsonLd([
 .badge {
   backdrop-filter: blur(2px);
 }
-/* Mirrors .count exactly — the reserved line is what keeps this card the same
-   height as its neighbour in the grid row, including the row where that
-   neighbour is a LIVE card carrying a rendered replay count. */
+/* Mirrors .count exactly. It is not what levels the grid row (grid stretch
+   does; see the measurement in the grid comment): it keeps this card's
+   bottom-anchored text block where a LIVE card's sits; without it the block
+   drops 20px. */
 .count-slot {
   min-height: 1.25rem;
   line-height: 1.25rem;

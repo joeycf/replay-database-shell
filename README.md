@@ -7,14 +7,20 @@ routing, robots, and sitemap index.
 The app is a **thin layer over [replay-engine](https://github.com/joeycf/replay-engine)**
 (pinned by tag in `nuxt.config.ts`): the engine owns the shared UI, chrome, and
 design tokens, and this repo supplies the selector page, the game registry, and
-the edge routing that puts both games on one domain. Unlike the game apps it
+the edge routing that puts every game on one domain. Unlike the game apps it
 ships **no data pipeline and no theme** — it wears the engine's neutral umbrella
 brand unmodified, so it favors no single game.
 
 > Part of the **Replay Database** platform — [replaydatabase.com](https://replaydatabase.com) ·
 > [engine](https://github.com/joeycf/replay-engine) ·
 > [2XKO](https://github.com/joeycf/2xko-replay-database) ·
-> [Tekken](https://github.com/joeycf/tekken-replay-database)
+> [Tekken](https://github.com/joeycf/tekken-replay-database) ·
+> [SF6](https://github.com/joeycf/sf6-replay-database) ·
+> [Tōkon](https://github.com/joeycf/tokon-replay-database) ·
+> [CotW](https://github.com/joeycf/ffcotw-replay-database) ·
+> [Strive](https://github.com/joeycf/ggst-replay-database) ·
+> [Granblue Rising](https://github.com/joeycf/gbvsr-replay-database) ·
+> [Avatar](https://github.com/joeycf/avatar-replay-database)
 
 ## Architecture
 
@@ -54,8 +60,8 @@ static leaf.)
   (v0.7.1) rather than here, so it reaches every game too; it is an absolute
   apex URL for that reason, and the shell briefly carried its own footer
   override to ship the link before that release.
-- **The router** (`vercel.json`) — external rewrites proxy `/2xko/*` and
-  `/tekken/*` to each game's own Vercel deployment, plus the **permanent**
+- **The router** (`vercel.json`) — external rewrites proxy each game's
+  `/<slug>` and `/<slug>/*` to its own Vercel deployment, plus the **permanent**
   redirect map that migrated 2XKO's legacy root URLs (`/champions/*`,
   `/players/*`, `/stats`, and the query-string deep links on `/`) to `/2xko/*`.
   `"permanent": true` emits **308**, which preserves the request method.
@@ -63,7 +69,7 @@ static leaf.)
 - **The platform sitemap** (`modules/sitemap-index.ts`) — runs after the engine's
   `static-artifacts` module on `prerender:done`, renames the engine-emitted page
   sitemap to `sitemap-pages.xml`, and overwrites `/sitemap.xml` with a sitemap
-  **index** referencing it plus both games' `/<slug>/sitemap.xml`. The engine's
+  **index** referencing it plus every game's `/<slug>/sitemap.xml`. The engine's
   `robots.txt` already advertises `<siteUrl>/sitemap.xml`, so 2XKO's existing
   Search Console submission carries over in place.
 
@@ -104,7 +110,7 @@ and there is no `NUXT_APP_BASE_URL` dance here — that's a game-app concern.
 | script                                           | what it does                                                                       |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------- |
 | `npm run dev` / `build` / `generate` / `preview` | Nuxt app (generate = full static build)                                            |
-| `npm run typecheck`                              | `nuxt prepare` + `nuxt typecheck` (vue-tsc)                                        |
+| `npm run typecheck`                              | `nuxt prepare` + `nuxt typecheck` (vue-tsc), then `verify:changelog`               |
 | `npm run lint` / `lint:fix`                      | ESLint over the whole repo                                                         |
 | `npm run format` / `format:check`                | Prettier                                                                           |
 | `npm run verify:changelog`                       | Schema gate on `lib/changelog.ts` — dates, scopes, kinds, ordering                 |
@@ -117,26 +123,39 @@ and there is no `NUXT_APP_BASE_URL` dance here — that's a game-app concern.
 ## Verification
 
 Routing is the thing most easily broken and least visible in review, so it has
-three levels of check:
+four levels of check:
 
 - **`npm run verify:shell`** runs against `.vercel/output/static` — never the dev
   server, which masks base and theme behavior. It asserts the selector renders
   with the umbrella theme (computed `--color-primary` = ReplayDB teal), one card
-  per game with its own accent, plain `<a>` hrefs at `/2xko` and `/tekken`, no
+  per game with its own accent, plain `<a>` hrefs at each game's `/<slug>`, no
   game nav, valid `ItemList` JSON-LD, a designed 404, and that no page request
   escapes the static root.
 - **`node scripts/simulate-topology.mjs`** reproduces production topology
   locally: redirects evaluated before the filesystem, then the shell's static
-  output, then rewrites proxied to the two games' local builds, then the designed 404. This is how a routing change gets tested without deploying.
+  output, then rewrites proxied to each game's local build, then the
+  designed 404. This is how a routing change gets tested without deploying.
 - **`npm run verify:changelog`** validates `lib/changelog.ts` before anything
   renders it: ISO dates, known scopes and kinds, reverse-chronological order, no
   future dates, title and sentence limits. It runs as the last step of
   `npm run typecheck`, because a malformed entry cannot fail a static build — it
   just ships.
 - **`npm run verify:cutover`** runs against a live host: every legacy 2XKO URL
-  shape redirecting through to a 200, both games clicking through the proxy with
-  their own themes intact and canonicals on the apex origin, and `/sitemap.xml`
+  shape redirecting through to a 200, every game clicking through the proxy with
+  its own theme intact and canonicals on the apex origin, and `/sitemap.xml`
   parsing as a sitemap index.
+
+**On every push to `main`,**
+[`.github/workflows/verify.yml`](./.github/workflows/verify.yml) ("Shell checks")
+runs `npm ci`, `npm run typecheck`, `npm run generate` and `npm run verify:shell`
+on a clean runner, with `ENGINE_PATH` unset so the build pulls the pinned tag
+exactly as Vercel does. It checks the engine out beside the shell at that tag only
+because typecheck resolves `@engine` to `../replay-engine` (without it, TS2307 at
+`app/app.config.ts:1`). It is a check, not a deploy: Vercel deploys as before, and
+a red there means the front door's gates no longer describe the front door.
+`verify:cutover` stays manual, because it reads the live apex. Until this
+workflow, the gates ran only when someone remembered: `verify:shell` sat red on
+main from 10-04 to 10-22.
 
 [`docs/CUTOVER.md`](./docs/CUTOVER.md) is the runbook the migration followed and
 records the standing rules below.
@@ -165,7 +184,7 @@ else**.
 
 Both SDKs resolve their script and beacons against a **same-origin** prefix, so
 the project credited is whichever one owns that path on the domain being
-browsed. Every page under `/2xko`, `/tekken`, `/sf6` and `/tokon` is served on the apex —
+browsed. Every page under each game's `/<slug>` is served on the apex —
 so without help, all of their data would land here.
 
 `vercel.json` therefore carries one insights rewrite per game:
@@ -177,7 +196,7 @@ so without help, all of their data would land here.
 Each is paired 1:1 with `observability.insights: '/<slug>-insights'` in that
 game's `app.config.ts`. **The pair ships together or every beacon 404s** — and
 404s silently, which is exactly how the Phase-5 cutover lost ~10 days of
-analytics for all four games. `npm run verify:cutover` gates it.
+analytics for every game it then served. `npm run verify:cutover` gates it.
 
 Same-origin is not incidental: the child projects' `/_vercel/insights/*`
 endpoints send no `Access-Control-Allow-*` headers, so pointing a game straight
@@ -353,9 +372,9 @@ Two rules worth repeating because breaking them is invisible until it's public:
   silently. Don't collapse the two arrays behind a `status` flag.
 - **`crawlLinks: false` in `nuxt.config.ts` is load-bearing.** Vercel's
   `vercel.json` rewrites are _fallbacks_ — applied only when no static file
-  matches. The selector links to `/2xko` and `/tekken`, which are edge rewrites,
-  not Nuxt routes; if the prerenderer crawled them it would emit hollow
-  `/2xko/*` HTML that **shadows the rewrites and breaks both games**. With the
+  matches. The selector links to each game's `/<slug>`, which is an edge rewrite,
+  not a Nuxt route; if the prerenderer crawled those links it would emit hollow
+  `/2xko/*` HTML that **shadows the rewrites and breaks every game**. With the
   flag off, only the three engine-seeded routes generate: `/`, `/health`,
   `/not-found`. The game links are plain `<a>` for the same reason — a full-page
   navigation hits the edge rewrite instead of the SPA router. **The corollary:
@@ -382,7 +401,7 @@ tsconfig files).
 | Fonts      | inherited from the engine                       | Space Grotesk / Inter / JetBrains Mono, committed `@fontsource` assets — no runtime CDN              |
 | Routing    | **`vercel.json`** redirects + external rewrites | the only place the platform's URL topology is expressed                                              |
 | Tests      | **puppeteer-core** (bespoke harness)            | drives system Chrome at `/usr/bin/google-chrome-stable`; no bundled browser                          |
-| Host       | **Vercel** Build Output API (`.vercel/output`)  | holds the apex domain; no cron, no pipeline                                                          |
+| Host       | **Vercel** Build Output API (`.vercel/output`)  | holds the apex domain; no cron, no pipeline; one check-only workflow, `.github/workflows/verify.yml` |
 | Node       | **24** (`engines.node: ">=24 <25"`)             | matches the platform policy                                                                          |
 
 ### Things worth knowing

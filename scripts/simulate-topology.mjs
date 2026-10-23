@@ -8,14 +8,14 @@ import { join } from 'node:path';
  *
  *   1. redirects (308, query passthrough) — evaluated BEFORE the filesystem
  *   2. shell filesystem (.vercel/output/static)
- *   3. rewrites — proxied to the two GAME builds' static outputs (served on
- *      their own local ports, standing in for the production aliases)
+ *   3. rewrites — proxied to each GAME build's static output (read straight
+ *      from disk via GAME_DIRS, standing in for the production aliases)
  *   4. the shell's designed 404.html
  *
  * Usage:  node scripts/simulate-topology.mjs
  * Prints the front origin, then serves until killed. Point
  * scripts/verify-cutover.mjs at it to validate the whole cutover locally
- * (redirect map, rewrite prefixes, both games' subpath builds, canonicals)
+ * (redirect map, rewrite prefixes, every game's subpath build, canonicals)
  * before anything touches Vercel. Vercel's own interpretation of the same
  * rules is re-verified on the preview rehearsal (C.3) and post-cutover (D.4).
  *

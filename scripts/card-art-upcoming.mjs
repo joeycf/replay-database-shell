@@ -67,7 +67,7 @@ import puppeteer from 'puppeteer-core';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHROME = process.env.CHROME_PATH || '/usr/bin/google-chrome-stable';
 
-/** The family's paper/ink pair, shared with the five live cards. */
+/** The family's paper/ink pair, inherited from scripts/card-art-tokon.mjs. */
 const PAPER = '#f4eee1';
 const INK = '#0a0b0f';
 

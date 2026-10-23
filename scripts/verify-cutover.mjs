@@ -15,12 +15,12 @@ import puppeteer from 'puppeteer-core';
  *   2. Every legacy 2XKO apex URL shape 30x → target → 200: /champions/ekko,
  *      a real /players/<id> (sampled from the game sitemap), /stats,
  *      /?fuse=juggernaut (filters!), /?v=<id> (modal opens).
- *   3. /2xko/ + /tekken/ click-through THROUGH the shell host: pages render
- *      real cards, canonicals carry the subpath on the apex origin, computed
- *      --color-primary = #ff2e88 (2XKO) / #e13048 (Tekken) — the Phase-4
+ *   3. Every /<slug>/ click-through THROUGH the shell host: pages render real
+ *      cards, canonicals carry the subpath on the apex origin, computed
+ *      --color-primary = that game's `primary` (GAMES below) — the Phase-4
  *      theme-presence gate re-applied through the proxy — and /health is 200.
  *   4. /robots.txt points at /sitemap.xml; /sitemap.xml is a sitemap INDEX
- *      listing sitemap-pages.xml + both game sitemaps; each game sitemap's
+ *      listing sitemap-pages.xml + one sitemap per game; each game sitemap's
  *      <loc>s ALL carry the game prefix; no unprefixed game <loc> anywhere.
  *   5. /changelog serves 200 through the apex, renders its entries with the
  *      game accents intact, canonicalizes to the apex, carries no second

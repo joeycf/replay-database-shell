@@ -10,7 +10,7 @@ import puppeteer from 'puppeteer-core';
  *
  *   1. / renders the selector: umbrella theme (computed --color-primary =
  *      ReplayDB teal), BrandLogo lockup, one card per game with its own accent,
- *      plain-<a> hrefs at /2xko | /tekken, NO game nav (Browse/Stats/…), plus
+ *      plain-<a> hrefs at every /<slug>, NO game nav (Browse/Stats/…), plus
  *      the non-navigable "Coming Soon" cards (NONE: Strive's promotion took
  *      the count to two, Granblue Rising's to one and Avatar's to zero).
  *      With none announced the gate asserts ABSENCE: no upcoming card renders
@@ -861,8 +861,8 @@ try {
         perRow: rows.map((t) => kids.filter((k) => top(k) === t).length),
         widths: kids.map((k) => Math.round(k.getBoundingClientRect().width)),
         // Grouped BY ROW: stacked 1-up cards are allowed to differ, but two
-        // cards sharing a row must not — that is what the reserved count line
-        // on the upcoming card is for.
+        // cards sharing a row must not. Grid stretch is what levels them (see the
+        // measurement above), not the upcoming card's reserved count line.
         rowHeights: rows.map((t) =>
           kids.filter((k) => top(k) === t).map((k) => Math.round(k.getBoundingClientRect().height)),
         ),
