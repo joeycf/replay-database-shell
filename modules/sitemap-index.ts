@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defineNuxtModule } from 'nuxt/kit';
 import { GAMES } from '../lib/games';
+import { BLOCKED_CRAWLERS } from '../lib/robots';
 import { SITE_URL } from '../lib/site';
 
 /**
@@ -21,8 +22,15 @@ import { SITE_URL } from '../lib/site';
  * transitions that submission in place — the index now fans out to every game's
  * prefixed sitemaps. This module runs AFTER the engine's static-artifacts on
  * `prerender:done`: it renames the engine's page sitemap to `sitemap-pages.xml`
- * and overwrites `sitemap.xml` with the index. (The engine's robots.txt is left
- * as-is — it already advertises <siteUrl>/sitemap.xml, which is now the index.)
+ * and overwrites `sitemap.xml` with the index.
+ *
+ * It also extends the engine's robots.txt (which already advertises
+ * <siteUrl>/sitemap.xml, now the index). The engine's allow-all `*` group stays
+ * as written, and one `Disallow: /` group is added per lib/robots.ts
+ * BLOCKED_CRAWLERS entry. That file explains each choice, and which crawlers
+ * are left alone on purpose. The apex robots.txt is the only one crawlers read
+ * for the whole domain, the game paths included (they never read
+ * /<slug>/robots.txt), so this is the one place to turn a crawler away.
  */
 
 export default defineNuxtModule({
@@ -67,9 +75,30 @@ export default defineNuxtModule({
           `\n</sitemapindex>\n`;
         writeFileSync(indexPath, index);
 
+        // robots.txt: the engine's file plus one Disallow group per blocked
+        // crawler, placed before the Sitemap line. A Sitemap record belongs to
+        // no group, so its position is cosmetic. Each crawler obeys only the
+        // most specific group that names it, so everyone else keeps `*`. If the
+        // engine ever stops writing robots.txt, fall back to its shape.
+        const robotsPath = join(publicDir, 'robots.txt');
+        let robots: string;
+        try {
+          robots = readFileSync(robotsPath, 'utf8');
+        } catch {
+          robots = `User-agent: *\nAllow: /\n\nSitemap: ${site}/sitemap.xml\n`;
+        }
+        const groups = BLOCKED_CRAWLERS.map((ua) => `User-agent: ${ua}\nDisallow: /\n`).join('\n');
+        const sitemapAt = robots.search(/^Sitemap:/m);
+        robots =
+          sitemapAt === -1
+            ? `${robots.trimEnd()}\n\n${groups}`
+            : `${robots.slice(0, sitemapAt).trimEnd()}\n\n${groups}\n${robots.slice(sitemapAt)}`;
+        writeFileSync(robotsPath, robots);
+
         console.log(
           `✓ sitemap index: sitemap.xml → sitemap-pages.xml + ${GAMES.length} game sitemaps`,
         );
+        console.log(`✓ robots.txt: ${BLOCKED_CRAWLERS.length} crawler groups disallowed`);
       });
     });
   },

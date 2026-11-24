@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import http from 'node:http';
 import { join } from 'node:path';
 import puppeteer from 'puppeteer-core';
+import { BLOCKED_CRAWLERS } from '../lib/robots.ts';
 
 /**
  * Shell selector gates (Phase-5 prompt A / D.4 local half) against the BUILT
@@ -466,6 +467,142 @@ try {
     `sitemap index carries NO upcoming game`,
     !UPCOMING.some((u) => sitemapIndex.toLowerCase().includes(u.slug)),
     sitemapChildren.join(', '),
+  );
+
+  // ── 1a1. robots.txt: the costly crawlers out, every search crawler in ────
+  // modules/sitemap-index.ts adds one `Disallow: /` group per lib/robots.ts
+  // BLOCKED_CRAWLERS entry. A crawler obeys only the group whose user-agent
+  // token matches its own, and falls back to `*` (RFC 9309 §2.2.1; Google
+  // matches the product token case-insensitively). So the SEO guard has three
+  // parts. `*` still allows the root, the shell's pages and every game. Every
+  // blocked entry is disallowed. And no group's token ever equals or extends a
+  // crawler that brings visitors: Googlebot-Image extends googlebot, so it is
+  // caught too.
+  const VERCEL = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const REWRITE_SLUGS = VERCEL.rewrites
+    .map((r) => r.source.match(/^\/([a-z0-9]+)\/:path\*$/)?.[1])
+    .filter(Boolean);
+  const robots = readFileSync(join(STATIC_DIR, 'robots.txt'), 'utf8');
+  // A user-agent value's product token: `*`, or its leading run of [a-z0-9_-].
+  const uaToken = (v) =>
+    v.startsWith('*') ? '*' : (v.toLowerCase().match(/^[a-z0-9_-]+/)?.[0] ?? '');
+  const robotGroups = []; // [{ agents: [token], rules: [{ allow, path }] }]
+  for (const raw of robots.split(/\r?\n/)) {
+    const line = raw.replace(/#.*/, '').trim();
+    const sep = line.indexOf(':');
+    if (sep === -1) continue;
+    const key = line.slice(0, sep).trim().toLowerCase();
+    const value = line.slice(sep + 1).trim();
+    if (key === 'user-agent') {
+      const last = robotGroups.at(-1);
+      if (last && last.rules.length === 0) last.agents.push(uaToken(value));
+      else robotGroups.push({ agents: [uaToken(value)], rules: [] });
+    } else if ((key === 'allow' || key === 'disallow') && robotGroups.length) {
+      robotGroups.at(-1).rules.push({ allow: key === 'allow', path: value });
+    }
+  }
+  const rulesFor = (token) =>
+    robotGroups.filter((g) => g.agents.includes(token)).flatMap((g) => g.rules);
+  // RFC 9309 §2.2.2: the longest matching rule wins, and allow wins a tie. A
+  // `*` in a rule matches any run of characters, a trailing `$` anchors the
+  // end, and an empty Disallow matches nothing.
+  const allowedFor = (token, path) => {
+    let best = null;
+    for (const r of rulesFor(token)) {
+      if (r.path === '') continue;
+      const anchored = r.path.endsWith('$');
+      const body = (anchored ? r.path.slice(0, -1) : r.path)
+        .split('*')
+        .map((s) => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+        .join('.*');
+      if (!new RegExp(`^${body}${anchored ? '$' : ''}`).test(path)) continue;
+      const longer = !best || r.path.length > best.path.length;
+      if (longer || (r.path.length === best.path.length && r.allow)) best = r;
+    }
+    return !best || best.allow;
+  };
+  const starPaths = [
+    '/',
+    '/changelog',
+    ...REWRITE_SLUGS.flatMap((s) => [`/${s}`, `/${s}/players/x`, `/${s}/data/summary.json`]),
+  ];
+  const starBlocked = starPaths.filter((p) => !allowedFor('*', p));
+  check(
+    `robots.txt: User-agent * allows the root, /changelog and all ${REWRITE_SLUGS.length} games (${starPaths.length} paths)`,
+    REWRITE_SLUGS.length > 0 && rulesFor('*').length > 0 && starBlocked.length === 0,
+    starBlocked.join(', '),
+  );
+  const notBlocked = BLOCKED_CRAWLERS.filter((ua) => allowedFor(uaToken(ua), '/'));
+  check(
+    `robots.txt: all ${BLOCKED_CRAWLERS.length} lib/robots.ts crawlers get Disallow: /`,
+    BLOCKED_CRAWLERS.length > 0 && notBlocked.length === 0,
+    notBlocked.join(', '),
+  );
+  // Crawlers that bring visitors: search engines, AI search and answer
+  // fetchers, and link-preview fetchers. A group whose token equals or extends
+  // one of these would govern that crawler. applebot-extended is Apple's
+  // AI-training opt-out token, not its search crawler.
+  const PROTECTED_CRAWLERS = [
+    'googlebot',
+    'storebot-google',
+    'google-inspectiontool',
+    'bingbot',
+    'msnbot',
+    'applebot',
+    'duckduckbot',
+    'duckassistbot',
+    'yandex',
+    'seznambot',
+    'oai-searchbot',
+    'chatgpt-user',
+    'perplexitybot',
+    'perplexity-user',
+    'claude-searchbot',
+    'claude-user',
+    'amzn-searchbot',
+    'amzn-user',
+    'exasearchbot',
+    'keenablebot',
+    'facebookexternalhit',
+    'twitterbot',
+    'discordbot',
+    'slackbot',
+  ];
+  const named = robotGroups
+    .flatMap((g) => g.agents)
+    .filter(
+      (t) => t !== 'applebot-extended' && PROTECTED_CRAWLERS.some((p) => t === p || t.startsWith(p)),
+    );
+  check(
+    `robots.txt: no group names a search, AI-search or link-preview crawler (they fall through to *)`,
+    named.length === 0,
+    named.join(', '),
+  );
+  check(
+    `robots.txt advertises the sitemap index`,
+    /^Sitemap: https:\/\/replaydatabase\.com\/sitemap\.xml$/m.test(robots),
+    robots,
+  );
+
+  // ── 1a1b. vercel.json: the edge-cache rules cover exactly the rewritten games
+  // Each `headers` rule names the games in a `:game(…)` alternation beside the
+  // rewrites. A game added to the rewrites but not here would silently go
+  // uncached. A rule with a `*` param also matches the bare directory
+  // (/tekken/data), so every rule ends in a literal file or a `+` param.
+  const cacheRules = VERCEL.headers ?? [];
+  const wantSlugs = [...REWRITE_SLUGS].sort().join('|');
+  const ruleSlugs = cacheRules.map((h) =>
+    (h.source.match(/^\/:game\(([^)]+)\)\//)?.[1] ?? '').split('|').sort().join('|'),
+  );
+  check(
+    `vercel.json: every edge-cache rule names exactly the ${REWRITE_SLUGS.length} rewritten games (${cacheRules.length} rules)`,
+    cacheRules.length > 0 && ruleSlugs.every((s) => s === wantSlugs),
+    `${wantSlugs} vs ${ruleSlugs.join(' / ')}`,
+  );
+  check(
+    `vercel.json: no edge-cache rule can match a bare directory (no * params)`,
+    cacheRules.every((h) => !h.source.includes('*')),
+    cacheRules.map((h) => h.source).join(' '),
   );
 
   // ── 1a2. the coming-soon cards ───────────────────────────────────────────

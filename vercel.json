@@ -249,5 +249,27 @@
       "source": "/avatar/:path*",
       "destination": "https://avatar-replay-database.vercel.app/avatar/:path*"
     }
+  ],
+  "headers": [
+    {
+      "source": "/:game(2xko|tekken|sf6|tokon|ffcotw|ggst|gbvsr|avatar)/:dir(icons|partners)/:path+",
+      "headers": [{ "key": "Vercel-CDN-Cache-Control", "value": "max-age=86400" }]
+    },
+    {
+      "source": "/:game(2xko|tekken|sf6|tokon|ffcotw|ggst|gbvsr|avatar)/:file(favicon\\.ico|favicon\\.svg|manifest\\.webmanifest)",
+      "headers": [{ "key": "Vercel-CDN-Cache-Control", "value": "max-age=86400" }]
+    },
+    {
+      "source": "/:game(2xko|tekken|sf6|tokon|ffcotw|ggst|gbvsr|avatar)/img/:path+",
+      "headers": [{ "key": "Vercel-CDN-Cache-Control", "value": "max-age=3600" }]
+    },
+    {
+      "source": "/:game(2xko|tekken|sf6|tokon|ffcotw|ggst|gbvsr|avatar)/og-default.png",
+      "headers": [{ "key": "Vercel-CDN-Cache-Control", "value": "max-age=3600" }]
+    },
+    {
+      "source": "/:game(2xko|tekken|sf6|tokon|ffcotw|ggst|gbvsr|avatar)/data/:file+",
+      "headers": [{ "key": "Vercel-CDN-Cache-Control", "value": "max-age=300" }]
+    }
   ]
 }
