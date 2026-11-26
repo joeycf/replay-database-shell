@@ -150,8 +150,9 @@ const UPCOMING = [];
  *  Derived from the slug rather than restated, so gate 6 covers every game in
  *  GAMES above and fails loudly if any of the eight pairs drifts. */
 const INSIGHTS_PREFIX = (slug) => `/${slug}-insights`;
-/** Speed Insights is single-project on Hobby: every game reports to whichever
- *  project owns the apex path, so this one is NOT per-game. */
+/** Speed Insights is opt-in since engine v0.19.0 and no game sets it, so no
+ *  page may request this prefix. Its beacons used to reach the shell project,
+ *  which had the feature disabled: billed requests that stored nothing. */
 const SPEED_INSIGHTS_PREFIX = '/_vercel/speed-insights';
 
 /** slug → the live summary payload, filled by the static block, read by the
@@ -746,8 +747,8 @@ try {
       observability.map((o) => `${o.status} ${o.p}`).join(', '),
     );
     check(
-      `vitals script resolves under ${SPEED_INSIGHTS_PREFIX} (shell project)`,
-      observability.some((o) => o.p.startsWith(`${SPEED_INSIGHTS_PREFIX}/`) && o.status < 400),
+      `no vitals request under ${SPEED_INSIGHTS_PREFIX} (Speed Insights is opt-in)`,
+      !observability.some((o) => o.p.startsWith(`${SPEED_INSIGHTS_PREFIX}/`)),
       observability.map((o) => `${o.status} ${o.p}`).join(', '),
     );
     // THE REGRESSION ITSELF: a 16-hex baked path means the explicit endpoints

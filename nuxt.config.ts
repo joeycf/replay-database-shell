@@ -14,13 +14,16 @@ export default defineNuxtConfig({
   // Never track a branch — bump the pin deliberately. `install: true` is
   // REQUIRED for git layers: without it the cloned layer gets no node_modules
   // and its runtime deps (@tailwindcss/vite, ufo, …) don't resolve (STACK §5.5).
-  // v0.18.1 is the tag all eight live games pin. Most engine releases are
+  // v0.19.0 is the tag the live games pin. Most engine releases are
   // game-facing and inert on a three-route selector, so the shell bumps lazily.
+  // v0.19.0 is not inert here: it ships one client JS file and one stylesheet,
+  // makes Speed Insights opt-in (this app sets none, so it no longer loads)
+  // and stops the hourly update poll.
   // One that was not: since v0.16.0 the WebSite and Organization JSON-LD come
   // from the engine's pages/index.vue rather than a site-wide plugin, and this
   // app overrides that page, so app/pages/index.vue emits them itself (and
   // scripts/verify-shell.mjs fails if they go missing).
-  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.18.1', { install: true }]],
+  extends: [process.env.ENGINE_PATH || ['github:joeycf/replay-engine#v0.19.0', { install: true }]],
 
   compatibilityDate: '2025-07-01',
 
